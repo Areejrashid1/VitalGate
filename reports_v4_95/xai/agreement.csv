@@ -1,0 +1,7 @@
+﻿cls,rho_xgb_vs_mlp,rho_shap_vs_occlusion,top_xgb,top_mlp,top_shap
+ae_bruteforce,0.1666666666666667,0.7380952380952381,Rejects & AE titles,Rejects & AE titles,Rejects & AE titles
+assoc_flood,0.3333333333333334,0.523809523809524,Packet size & timing,Scanning / TCP flags,Packet size & timing
+exfiltration,0.07142857142857144,0.38095238095238104,Outbound volume,Inbound volume,Outbound volume
+malformed_pdu,0.07142857142857144,0.9285714285714287,Packet size & timing,Association setup,Packet size & timing
+ransomware_like,0.38095238095238104,1.0,Outbound volume,Scanning / TCP flags,Outbound volume
+recon,0.7857142857142858,0.7380952380952381,Scanning / TCP flags,Scanning / TCP flags,Scanning / TCP flags

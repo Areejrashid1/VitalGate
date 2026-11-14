@@ -1,0 +1,8 @@
+﻿,top-5 features pushing towards the class
+ae_bruteforce,"assoc_rj, assoc_rj_lag1, out_in_ratio_sum60s, gap_s, bytes_per_pkt"
+assoc_flood,"n_src_ports, bytes_per_pkt, std_pkt, mean_pkt, bytes_per_pkt_lag1"
+benign,"out_in_ratio_sum60s, out_in_byte_ratio, out_in_ratio_sum300s, bytes_per_pkt, n_src_ports"
+exfiltration,"out_in_byte_ratio, in_bytes_sum60s, out_in_byte_ratio_lag2, bytes_per_pkt, std_pkt_lag1"
+malformed_pdu,"rst, bytes_per_pkt, std_pkt, out_in_byte_ratio, rst_lag1"
+ransomware_like,"in_bytes_sum60s, out_in_ratio_sum60s, out_in_ratio_sum300s, mean_pkt, mean_pkt_lag1"
+recon,"n_dst_ports, rst_syn_ratio, rst, bytes_per_pkt, n_dst_ports_lag1"

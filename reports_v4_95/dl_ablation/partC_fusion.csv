@@ -1,0 +1,4 @@
+﻿,macro_F1,macro_F1_no_recon,F1_exfiltration,F1_ransomware_like,FP_per_wallclock_h
+XGBoost roll3 (ours),0.93,0.918,0.775,0.81,1.172
+GRU · window history N=10,0.945,0.936,0.814,0.849,1.813
+fusion (w_xgb=0.4),0.951,0.943,0.83,0.867,1.032

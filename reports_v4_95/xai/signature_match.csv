@@ -1,0 +1,7 @@
+﻿,windows,top1_in_expected,top2_hits_expected,most_common_top1
+ae_bruteforce,486,0.963,0.967,Rejects & AE titles
+assoc_flood,440,0.016,0.977,Packet size & timing
+exfiltration,210,0.843,0.971,Outbound volume
+malformed_pdu,346,0.0,0.04,Packet size & timing
+ransomware_like,339,0.988,1.0,Outbound volume
+recon,415,0.99,0.99,Scanning / TCP flags
