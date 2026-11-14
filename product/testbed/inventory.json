@@ -1,0 +1,12 @@
+{
+ "_comment": "Asset inventory of the one-site test bed (NIST 800-207 CDM data source). Roles set the criticality cap of the response ladder. Written from docker-compose.yml, not learned from traffic.",
+ "roles": {
+  "172.28.1.20": "PACS server",
+  "172.28.1.31": "modality", "172.28.1.32": "modality", "172.28.1.33": "modality",
+  "172.28.1.34": "modality", "172.28.1.35": "modality",
+  "172.28.1.51": "workstation", "172.28.1.52": "workstation",
+  "172.28.1.60": "monitoring",
+  "172.28.1.77": "unknown"
+ },
+ "criticality": {"monitoring": "medium"}
+}

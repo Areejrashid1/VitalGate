@@ -21,3 +21,17 @@ Result 2026-11-14: site A benign (4 pcaps, 152 windows) and site B with all 8 cl
 Note: Netsol project dataset/features.csv is the old v1 (scapy) table, NOT the training table; do not use it as reference.
 Note: training pcaps contain GSO/GRO super-packets (11.5% of packets > 1500 B, max 65 KB) because capture ran on the
 PACS's Docker interface. The test bed must capture at the same kind of point, or the sensor needs segment coalescing.
+
+## Frozen model and offline evaluation (added 2026-11-15)
+- `scripts/freeze_bundle.py` copies the trained model from `../models` into `bundle/` with SHA-256 hashes
+  (`bundle/BUNDLE.json`). The product refuses a bundle whose files changed. Frozen: 48 federated updates
+  (3,360 trees), 83 features, T = 0.75, CUSUM (k 0.6, h 0.5).
+- `vitalgate/model/` evaluates the XGBoost JSON trees in numpy (no xgboost needed at run time).
+- `vitalgate/response/engine.py` = CUSUM + L0-L4 ladder (and binary blocking baseline), same logic as notebook 06.
+- `tests/test_model_parity.py` reproduces notebooks 05/06 on the lab test split exactly:
+  macro-F1 0.9531 (05), ECE 0.0041, log-loss 0.0758, CUSUM 126/126 runs, 0.027 false episodes/h, median TTD 4 s,
+  ladder vs binary clinical blocked 0.000 vs 0.101 min/h (06).
+- `eval/offline_eval.py` runs the whole frozen pipeline on test-bed pcaps and scores it against `truth.csv`
+  (known vs novel, class, variant, intensity, source). From product/:
+  `python eval/offline_eval.py --pcap-dir testbed/out/pcap --truth testbed/out/truth.csv --run-id tb_0001 --out eval/results/tb_0001`
+- `testbed/inventory.json` = device roles of the test bed (sets the criticality caps).
