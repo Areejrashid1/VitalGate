@@ -1,0 +1,39 @@
+{
+  "method": "FedXgb bagging, equal client scaling (1/n)",
+  "agg": "equal",
+  "local_trees": 10,
+  "max_rounds": 80,
+  "patience": 6,
+  "xgb": {
+    "max_depth": 8,
+    "eta": 0.1,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "class_weights": "sqrt"
+  },
+  "round0": [
+    "class counts -> global prior + class weights"
+  ],
+  "results_notebook03": {
+    "P1_3_sites_macroF1": 0.926,
+    "P1_FP_per_h": 1.255,
+    "centralised_macroF1": 0.928,
+    "unseen_site_C_macroF1": 0.918,
+    "dirichlet_macroF1": {
+      "0.1": 0.831,
+      "0.5": 0.919,
+      "5.0": 0.924
+    }
+  },
+  "defence": {
+    "name": "gate-kofn",
+    "f_assumed": 1,
+    "tol": 0.002,
+    "notebook04": {
+      "clean_macroF1": 0.926,
+      "worst_attack_macroF1": 0.923,
+      "honest_rejected": "0-2%",
+      "malicious_rejected": "77-97%"
+    }
+  }
+}

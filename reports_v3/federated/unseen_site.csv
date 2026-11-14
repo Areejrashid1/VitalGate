@@ -1,0 +1,6 @@
+﻿setting,macro_F1,macro_F1_no_recon,F1_exfiltration,F1_ransomware_like,FP_per_wallclock_h
+local-only A,0.944 ± 0.002,0.935 ± 0.003,0.811 ± 0.013,0.88 ± 0.005,0.887 ± 0.12
+local-only B,0.905 ± 0.001,0.89 ± 0.001,0.619 ± 0.001,0.824 ± 0.008,5.02 ± 0.118
+centralised A+B,0.953 ± 0.001,0.946 ± 0.001,0.838 ± 0.001,0.897 ± 0.006,0.868 ± 0.029
+"federated (bagging, sum) A+B",0.948 ± 0.002,0.939 ± 0.002,0.82 ± 0.006,0.882 ± 0.006,0.985 ± 0.056
+"federated (bagging, weighted) A+B",0.949 ± 0.002,0.94 ± 0.002,0.821 ± 0.009,0.887 ± 0.003,0.99 ± 0.167
