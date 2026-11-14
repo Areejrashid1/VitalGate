@@ -1,0 +1,5 @@
+﻿setting,macro_F1,macro_F1_no_recon,MCC,PR_AUC,FPR_at_95TPR,FP_per_wallclock_h,F1_exfiltration,F1_ransomware_like
+local-only site A,0.947,0.939,0.95,0.993,0.007,0.446,0.817,0.865
+local-only site B,0.928,0.922,0.933,0.989,0.014,1.674,0.756,0.844
+local-only site C,0.945,0.936,0.948,0.992,0.006,0.502,0.814,0.866
+centralised (all sites),0.954,0.946,0.96,0.996,0.002,0.418,0.834,0.878

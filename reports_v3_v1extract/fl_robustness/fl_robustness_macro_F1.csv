@@ -1,0 +1,5 @@
+﻿attack,none,clip,gate-median,gate-kofn,gate-kofn+clip
+none,0.953,0.953,0.949,0.953,0.953
+label_flip,0.94,0.94,0.95,0.95,0.95
+random_labels,0.941,0.941,0.883,0.952,0.951
+flip_amplify,0.833,0.895,0.941,0.949,0.949

@@ -1,0 +1,20 @@
+{
+  "Name": "VG-PACS-A",
+  "DicomAet": "VG_ARCHIVE",
+  "DicomPort": 104,
+  "HttpPort": 8042,
+  "RemoteAccessAllowed": true,
+  "AuthenticationEnabled": false,
+  "DicomCheckCalledAet": true,
+  "DicomAlwaysAllowEcho": true,
+  "DicomAlwaysAllowStore": true,
+  "DicomAlwaysAllowFind": true,
+  "DicomAlwaysAllowGet": true,
+  "DicomAlwaysAllowMove": true,
+  "UnknownSopClassAccepted": true,
+  "DicomScpTimeout": 30,
+  "OverwriteInstances": true,
+  "MaximumStorageSize": 3000,
+  "MaximumStorageMode": "Recycle",
+  "DicomModalities": { "ws_read02": [ "WS_READ02", "172.28.1.52", 11113 ] }
+}

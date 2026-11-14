@@ -1,0 +1,93 @@
+{
+  "model": {
+    "path": "models/fed_xgb",
+    "feature_version": "v3",
+    "n_updates": 62,
+    "temperature": 1.3
+  },
+  "detector": {
+    "name": "CUSUM",
+    "kind": "cusum",
+    "kref": 0.1,
+    "h": 1.5,
+    "per_host_k": {},
+    "gap_s": 60
+  },
+  "ladder": {
+    "severity": {
+      "recon": 1,
+      "ae_bruteforce": 2,
+      "assoc_flood": 2,
+      "malformed_pdu": 2,
+      "exfiltration": 3,
+      "ransomware_like": 3,
+      "preamble_polyglot": 3
+    },
+    "base": "sev3: L4 if conf>=0.9 else L3 | sev2: L3 if conf>=0.9 else L2 | sev1: L2 if conf>=0.9 else L1",
+    "escalate_after_s": 30,
+    "ttl_s": 60,
+    "fail_open": true
+  },
+  "criticality": {
+    "role_to_criticality": {
+      "PACS server": "critical",
+      "modality": "high",
+      "workstation": "medium",
+      "attacker (outside host)": "low",
+      "unknown": "low"
+    },
+    "max_level": {
+      "critical": 2,
+      "high": 3,
+      "medium": 4,
+      "low": 4
+    },
+    "hosts": {
+      "10.77.1.129": "medium",
+      "10.77.1.130": "high",
+      "10.77.1.131": "high",
+      "10.77.1.132": "high",
+      "10.77.1.133": "high",
+      "10.77.1.134": "medium",
+      "10.77.1.99": "low",
+      "10.77.2.129": "high",
+      "10.77.2.130": "high",
+      "10.77.2.131": "high",
+      "10.77.2.132": "medium",
+      "10.77.2.133": "high",
+      "10.77.2.134": "high",
+      "10.77.2.99": "low",
+      "10.77.3.129": "medium",
+      "10.77.3.130": "high",
+      "10.77.3.131": "high",
+      "10.77.3.132": "medium",
+      "10.77.3.133": "medium",
+      "10.77.3.134": "high",
+      "10.77.3.99": "low"
+    }
+  },
+  "enforcement": {
+    "pep_setup": [
+      "ipset create vg_watch hash:ip timeout 0",
+      "ipset create vg_rate hash:ip timeout 0",
+      "ipset create vg_quar hash:ip timeout 0",
+      "ipset create vg_iso hash:ip timeout 0",
+      "iptables -I FORWARD 1 -m set --match-set vg_iso src -j DROP",
+      "iptables -I FORWARD 1 -m set --match-set vg_iso dst -j DROP",
+      "iptables -I FORWARD 1 -m set --match-set vg_quar src -j DROP",
+      "iptables -I FORWARD 1 -m set --match-set vg_quar src -d <PACS_IP> -p tcp --dport <DICOM_PORT> -m hashlimit --hashlimit-upto 200/sec --hashlimit-mode srcip --hashlimit-name vg_quar -j ACCEPT",
+      "iptables -I FORWARD 1 -m set --match-set vg_rate src -p tcp --dport <DICOM_PORT> -m hashlimit --hashlimit-above 50/sec --hashlimit-burst 100 --hashlimit-mode srcip --hashlimit-name vg_rate -j DROP",
+      "iptables -I FORWARD 1 -m set --match-set vg_watch src -j NFLOG --nflog-group 7"
+    ],
+    "dicom_port": {
+      "A": 4242,
+      "B": 11112,
+      "C": 4243
+    },
+    "pacs_ip": {
+      "A": "10.77.1.10",
+      "B": "10.77.2.10",
+      "C": "10.77.3.10"
+    }
+  }
+}
