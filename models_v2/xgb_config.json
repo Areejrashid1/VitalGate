@@ -1,0 +1,71 @@
+{
+  "features": [
+    "out_pkts",
+    "out_bytes",
+    "in_pkts",
+    "in_bytes",
+    "mean_pkt",
+    "std_pkt",
+    "mean_iat_ms",
+    "std_iat_ms",
+    "syn",
+    "rst",
+    "fin",
+    "n_dst_ports",
+    "n_src_ports",
+    "assoc_rq",
+    "assoc_ac",
+    "assoc_rj",
+    "abort",
+    "release",
+    "pdata_pkts",
+    "n_called_ae",
+    "n_calling_ae",
+    "bad_first_pdu",
+    "big_pdu_len",
+    "bytes_per_pkt",
+    "out_in_byte_ratio",
+    "assoc_accept_ratio",
+    "rst_syn_ratio",
+    "out_pkts_roll3",
+    "out_bytes_roll3",
+    "assoc_rq_roll3",
+    "pdata_pkts_roll3",
+    "mean_iat_ms_roll3"
+  ],
+  "classes": [
+    "ae_bruteforce",
+    "assoc_flood",
+    "benign",
+    "exfiltration",
+    "malformed_pdu",
+    "ransomware_like",
+    "recon"
+  ],
+  "best_params": {
+    "depth": 6,
+    "lr": 0.05,
+    "weights": "sqrt"
+  },
+  "tau": null,
+  "smoothing": "2-of-3, 60 s gap",
+  "rolling": {
+    "base": [
+      "out_pkts",
+      "out_bytes",
+      "assoc_rq",
+      "pdata_pkts",
+      "mean_iat_ms"
+    ],
+    "window": 3,
+    "causal": true
+  },
+  "rule_class": "preamble_polyglot",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ]
+}

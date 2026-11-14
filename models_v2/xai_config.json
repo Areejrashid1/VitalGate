@@ -1,0 +1,123 @@
+{
+  "groups": {
+    "Association setup": [
+      "assoc_rq",
+      "assoc_ac",
+      "release",
+      "abort",
+      "assoc_accept_ratio",
+      "assoc_rq_roll3"
+    ],
+    "Rejects & AE titles": [
+      "assoc_rj",
+      "n_called_ae",
+      "n_calling_ae"
+    ],
+    "PDU anomalies": [
+      "bad_first_pdu",
+      "big_pdu_len"
+    ],
+    "Outbound volume": [
+      "out_pkts",
+      "out_bytes",
+      "out_pkts_roll3",
+      "out_bytes_roll3",
+      "out_in_byte_ratio"
+    ],
+    "Inbound volume": [
+      "in_pkts",
+      "in_bytes"
+    ],
+    "DICOM data transfer": [
+      "pdata_pkts",
+      "pdata_pkts_roll3"
+    ],
+    "Packet size & timing": [
+      "mean_pkt",
+      "std_pkt",
+      "bytes_per_pkt",
+      "mean_iat_ms",
+      "std_iat_ms",
+      "mean_iat_ms_roll3"
+    ],
+    "Scanning / TCP flags": [
+      "syn",
+      "rst",
+      "fin",
+      "rst_syn_ratio",
+      "n_dst_ports",
+      "n_src_ports"
+    ]
+  },
+  "expected": {
+    "recon": [
+      "Scanning / TCP flags"
+    ],
+    "ae_bruteforce": [
+      "Rejects & AE titles",
+      "Association setup"
+    ],
+    "assoc_flood": [
+      "Association setup",
+      "PDU anomalies",
+      "Scanning / TCP flags"
+    ],
+    "malformed_pdu": [
+      "PDU anomalies"
+    ],
+    "exfiltration": [
+      "Outbound volume",
+      "DICOM data transfer",
+      "Inbound volume"
+    ],
+    "ransomware_like": [
+      "Outbound volume",
+      "DICOM data transfer",
+      "Inbound volume"
+    ]
+  },
+  "headline": {
+    "recon": "Port scan / service discovery",
+    "ae_bruteforce": "AE-title guessing (brute force)",
+    "assoc_flood": "DICOM association flood",
+    "malformed_pdu": "Malformed DICOM PDUs",
+    "exfiltration": "Possible bulk data exfiltration",
+    "ransomware_like": "Mass write activity (ransomware-like)"
+  },
+  "benign_median": {
+    "out_pkts": 59.0,
+    "out_bytes": 297060.0,
+    "in_pkts": 63.0,
+    "in_bytes": 4860.00048828125,
+    "mean_pkt": 6650.0751953125,
+    "std_pkt": 7405.50048828125,
+    "mean_iat_ms": 2.4785799980163574,
+    "std_iat_ms": 8.571826934814453,
+    "syn": 1.0,
+    "rst": 0.0,
+    "fin": 1.0,
+    "n_dst_ports": 1.0,
+    "n_src_ports": 1.0,
+    "assoc_rq": 1.0,
+    "assoc_ac": 1.0,
+    "assoc_rj": 0.0,
+    "abort": 0.0,
+    "release": 1.0,
+    "pdata_pkts": 19.0,
+    "n_called_ae": 1.0,
+    "n_calling_ae": 1.0,
+    "bad_first_pdu": 0.0,
+    "big_pdu_len": 0.0,
+    "bytes_per_pkt": 4408.38427734375,
+    "out_in_byte_ratio": 140.7633819580078,
+    "assoc_accept_ratio": 0.9999989867210388,
+    "rst_syn_ratio": 0.0,
+    "out_pkts_roll3": 67.0,
+    "out_bytes_roll3": 354534.34375,
+    "assoc_rq_roll3": 1.0,
+    "pdata_pkts_roll3": 23.33333396911621,
+    "mean_iat_ms_roll3": 2.810218095779419
+  },
+  "reference": "benign median of split_run train windows",
+  "consistency_rule": "top group in expected set"
+}

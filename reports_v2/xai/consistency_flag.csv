@@ -1,0 +1,4 @@
+﻿,alerts,flagged inconsistent %
+correct alert,2157,33.6
+false alarm (benign),44,18.2
+wrong attack class,27,22.2

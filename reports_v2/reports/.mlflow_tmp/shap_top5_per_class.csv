@@ -1,0 +1,8 @@
+﻿,top-5 features pushing towards the class
+ae_bruteforce,"assoc_rj, pdata_pkts_roll3, assoc_rq_roll3, out_pkts_roll3, in_bytes"
+assoc_flood,"n_src_ports, bytes_per_pkt, bad_first_pdu, mean_pkt, mean_iat_ms_roll3"
+benign,"bytes_per_pkt, out_in_byte_ratio, pdata_pkts_roll3, n_src_ports, in_bytes"
+exfiltration,"out_in_byte_ratio, in_bytes, bytes_per_pkt, n_src_ports, out_bytes_roll3"
+malformed_pdu,"rst, bytes_per_pkt, std_pkt, rst_syn_ratio, in_bytes"
+ransomware_like,"out_bytes_roll3, in_bytes, out_in_byte_ratio, bytes_per_pkt, assoc_rq_roll3"
+recon,"n_dst_ports, rst_syn_ratio, rst, bytes_per_pkt, syn"

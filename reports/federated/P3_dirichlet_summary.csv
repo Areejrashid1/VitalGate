@@ -1,6 +1,6 @@
 ﻿setting,0.1,0.5,5.0
-local-only (mean of clients),0.4 ± 0.029,0.825 ± 0.055,0.912 ± 0.002
-local-only (best client),0.574 ± 0.051,0.872 ± 0.063,0.917 ± 0.002
-"federated (bagging, sum)",0.857 ± 0.034,0.907 ± 0.015,0.876 ± 0.007
-"federated (bagging, weighted)",0.673 ± 0.077,0.911 ± 0.011,0.923 ± 0.001
-centralised,0.928 ± 0.0,0.928 ± 0.0,0.928 ± 0.0
+local-only (mean of clients),0.411 ± 0.031,0.834 ± 0.046,0.933 ± 0.001
+local-only (best client),0.6 ± 0.045,0.891 ± 0.067,0.941 ± 0.002
+"federated (bagging, sum)",0.864 ± 0.04,0.906 ± 0.027,0.921 ± 0.002
+"federated (bagging, weighted)",0.707 ± 0.084,0.929 ± 0.016,0.949 ± 0.003
+centralised,0.954 ± 0.0,0.954 ± 0.0,0.954 ± 0.0
