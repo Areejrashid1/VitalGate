@@ -145,4 +145,4 @@ python orchestrator/demo.py                           # 7-minute scripted attack
 
 ## Author
 
-Areej ([@Areejrashid1](https://github.com/Areejrashid1)), NETSOL IDS research project.
+Areej Rashid([@Areejrashid1](https://github.com/Areejrashid1))
