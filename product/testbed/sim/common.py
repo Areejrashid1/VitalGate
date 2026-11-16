@@ -48,8 +48,8 @@ def my_ip():
         return "0.0.0.0"
 
 
-def truth(**row):
-    path = os.path.join(OUT, "truth.csv")
+def truth(file="truth.csv", **row):
+    path = os.path.join(OUT, file)
     new = not os.path.exists(path)
     with open(path, "a", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(row))

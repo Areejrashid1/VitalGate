@@ -1,0 +1,752 @@
+{
+ "classes": [
+  "ae_bruteforce",
+  "assoc_flood",
+  "benign",
+  "exfiltration",
+  "malformed_pdu",
+  "ransomware_like",
+  "recon"
+ ],
+ "features": [
+  "out_pkts",
+  "out_bytes",
+  "in_pkts",
+  "in_bytes",
+  "mean_pkt",
+  "std_pkt",
+  "mean_iat_ms",
+  "std_iat_ms",
+  "syn",
+  "rst",
+  "fin",
+  "n_dst_ports",
+  "n_src_ports",
+  "assoc_rq",
+  "assoc_ac",
+  "assoc_rj",
+  "abort",
+  "release",
+  "pdata_pkts",
+  "n_called_ae",
+  "n_calling_ae",
+  "bad_first_pdu",
+  "big_pdu_len",
+  "bytes_per_pkt",
+  "out_in_byte_ratio",
+  "assoc_accept_ratio",
+  "rst_syn_ratio",
+  "out_pkts_lag1",
+  "out_bytes_lag1",
+  "in_pkts_lag1",
+  "in_bytes_lag1",
+  "mean_pkt_lag1",
+  "std_pkt_lag1",
+  "mean_iat_ms_lag1",
+  "std_iat_ms_lag1",
+  "syn_lag1",
+  "rst_lag1",
+  "fin_lag1",
+  "n_dst_ports_lag1",
+  "n_src_ports_lag1",
+  "assoc_rq_lag1",
+  "assoc_ac_lag1",
+  "assoc_rj_lag1",
+  "abort_lag1",
+  "release_lag1",
+  "pdata_pkts_lag1",
+  "n_called_ae_lag1",
+  "n_calling_ae_lag1",
+  "bad_first_pdu_lag1",
+  "big_pdu_len_lag1",
+  "bytes_per_pkt_lag1",
+  "out_in_byte_ratio_lag1",
+  "assoc_accept_ratio_lag1",
+  "rst_syn_ratio_lag1",
+  "out_pkts_lag2",
+  "out_bytes_lag2",
+  "in_pkts_lag2",
+  "in_bytes_lag2",
+  "mean_pkt_lag2",
+  "std_pkt_lag2",
+  "mean_iat_ms_lag2",
+  "std_iat_ms_lag2",
+  "syn_lag2",
+  "rst_lag2",
+  "fin_lag2",
+  "n_dst_ports_lag2",
+  "n_src_ports_lag2",
+  "assoc_rq_lag2",
+  "assoc_ac_lag2",
+  "assoc_rj_lag2",
+  "abort_lag2",
+  "release_lag2",
+  "pdata_pkts_lag2",
+  "n_called_ae_lag2",
+  "n_calling_ae_lag2",
+  "bad_first_pdu_lag2",
+  "big_pdu_len_lag2",
+  "bytes_per_pkt_lag2",
+  "out_in_byte_ratio_lag2",
+  "assoc_accept_ratio_lag2",
+  "rst_syn_ratio_lag2",
+  "gap_s",
+  "gap_lag1"
+ ],
+ "prior": [
+  -3.306043863296509,
+  -3.335117816925049,
+  -0.22365547716617584,
+  -3.753525733947754,
+  -3.589570999145508,
+  -3.7886171340942383,
+  -2.9101765155792236
+ ],
+ "method": "FedXgb bagging, equal client scaling (1/n)",
+ "defence": "k-of-n peer validation gate (f=1, tol=0.002)",
+ "updates": [
+  {
+   "file": "update_000.json",
+   "round": 1,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_001.json",
+   "round": 1,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_002.json",
+   "round": 1,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_003.json",
+   "round": 2,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_004.json",
+   "round": 2,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_005.json",
+   "round": 2,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_006.json",
+   "round": 3,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_007.json",
+   "round": 3,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_008.json",
+   "round": 3,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_009.json",
+   "round": 4,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_010.json",
+   "round": 4,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_011.json",
+   "round": 4,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_012.json",
+   "round": 5,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_013.json",
+   "round": 5,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_014.json",
+   "round": 5,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_015.json",
+   "round": 6,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_016.json",
+   "round": 6,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_017.json",
+   "round": 6,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_018.json",
+   "round": 7,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_019.json",
+   "round": 7,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_020.json",
+   "round": 7,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_021.json",
+   "round": 8,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_022.json",
+   "round": 8,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_023.json",
+   "round": 8,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_024.json",
+   "round": 9,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_025.json",
+   "round": 9,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_026.json",
+   "round": 9,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_027.json",
+   "round": 10,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_028.json",
+   "round": 10,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_029.json",
+   "round": 10,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_030.json",
+   "round": 11,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_031.json",
+   "round": 11,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_032.json",
+   "round": 11,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_033.json",
+   "round": 12,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_034.json",
+   "round": 12,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_035.json",
+   "round": 12,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_036.json",
+   "round": 13,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_037.json",
+   "round": 13,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_038.json",
+   "round": 13,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_039.json",
+   "round": 14,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_040.json",
+   "round": 14,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_041.json",
+   "round": 14,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_042.json",
+   "round": 15,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_043.json",
+   "round": 15,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_044.json",
+   "round": 15,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_045.json",
+   "round": 16,
+   "client": "A",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_046.json",
+   "round": 16,
+   "client": "B",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_047.json",
+   "round": 16,
+   "client": "C",
+   "scale": 0.3333333333333333
+  },
+  {
+   "file": "update_adapt_000.json",
+   "round": "adapt-1",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_001.json",
+   "round": "adapt-2",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_002.json",
+   "round": "adapt-3",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_003.json",
+   "round": "adapt-4",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_004.json",
+   "round": "adapt-5",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_005.json",
+   "round": "adapt-6",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_006.json",
+   "round": "adapt-7",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_007.json",
+   "round": "adapt-8",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_008.json",
+   "round": "adapt-9",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_009.json",
+   "round": "adapt-10",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_010.json",
+   "round": "adapt-11",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_011.json",
+   "round": "adapt-12",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_012.json",
+   "round": "adapt-13",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_013.json",
+   "round": "adapt-14",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_014.json",
+   "round": "adapt-15",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_015.json",
+   "round": "adapt-16",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_016.json",
+   "round": "adapt-17",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_017.json",
+   "round": "adapt-18",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_018.json",
+   "round": "adapt-19",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_019.json",
+   "round": "adapt-20",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_020.json",
+   "round": "adapt-21",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_021.json",
+   "round": "adapt-22",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_022.json",
+   "round": "adapt-23",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_023.json",
+   "round": "adapt-24",
+   "client": "D",
+   "scale": 0.25
+  },
+  {
+   "file": "update_adapt_024.json",
+   "round": "adapt-25",
+   "client": "D",
+   "scale": 0.25
+  }
+ ],
+ "adaptation": {
+  "mode": "local-labelled",
+  "scope": "site D only (personalised)",
+  "note": "site D = test-bed hospital; data before tb_0003 only (onboarding + SOC-labelled tb_0001/tb_0002 if labelled)",
+  "onboarding_pcaps": [
+   "tbA_20261116_045300.pcap",
+   "tbA_20261116_075520.pcap"
+  ],
+  "best_round": 25,
+  "new_updates": 25,
+  "rejected_per_site": {
+   "A": 0,
+   "B": 0,
+   "C": 0,
+   "D": 0
+  },
+  "log": [
+   {
+    "round": 1,
+    "val_macro_F1": 0.4019,
+    "siteD_val_flagged": 0.1625,
+    "accepted": 1
+   },
+   {
+    "round": 2,
+    "val_macro_F1": 0.4062,
+    "siteD_val_flagged": 0.1458,
+    "accepted": 2
+   },
+   {
+    "round": 3,
+    "val_macro_F1": 0.4183,
+    "siteD_val_flagged": 0.1281,
+    "accepted": 3
+   },
+   {
+    "round": 4,
+    "val_macro_F1": 0.431,
+    "siteD_val_flagged": 0.1166,
+    "accepted": 4
+   },
+   {
+    "round": 5,
+    "val_macro_F1": 0.4775,
+    "siteD_val_flagged": 0.1034,
+    "accepted": 5
+   },
+   {
+    "round": 6,
+    "val_macro_F1": 0.4874,
+    "siteD_val_flagged": 0.0945,
+    "accepted": 6
+   },
+   {
+    "round": 7,
+    "val_macro_F1": 0.5068,
+    "siteD_val_flagged": 0.0883,
+    "accepted": 7
+   },
+   {
+    "round": 8,
+    "val_macro_F1": 0.516,
+    "siteD_val_flagged": 0.0813,
+    "accepted": 8
+   },
+   {
+    "round": 9,
+    "val_macro_F1": 0.5288,
+    "siteD_val_flagged": 0.0742,
+    "accepted": 9
+   },
+   {
+    "round": 10,
+    "val_macro_F1": 0.536,
+    "siteD_val_flagged": 0.0716,
+    "accepted": 10
+   },
+   {
+    "round": 11,
+    "val_macro_F1": 0.5383,
+    "siteD_val_flagged": 0.0671,
+    "accepted": 11
+   },
+   {
+    "round": 12,
+    "val_macro_F1": 0.5397,
+    "siteD_val_flagged": 0.0645,
+    "accepted": 12
+   },
+   {
+    "round": 13,
+    "val_macro_F1": 0.5429,
+    "siteD_val_flagged": 0.0592,
+    "accepted": 13
+   },
+   {
+    "round": 14,
+    "val_macro_F1": 0.5465,
+    "siteD_val_flagged": 0.0539,
+    "accepted": 14
+   },
+   {
+    "round": 15,
+    "val_macro_F1": 0.5513,
+    "siteD_val_flagged": 0.053,
+    "accepted": 15
+   },
+   {
+    "round": 16,
+    "val_macro_F1": 0.5536,
+    "siteD_val_flagged": 0.0477,
+    "accepted": 16
+   },
+   {
+    "round": 17,
+    "val_macro_F1": 0.5546,
+    "siteD_val_flagged": 0.0442,
+    "accepted": 17
+   },
+   {
+    "round": 18,
+    "val_macro_F1": 0.5562,
+    "siteD_val_flagged": 0.0424,
+    "accepted": 18
+   },
+   {
+    "round": 19,
+    "val_macro_F1": 0.5567,
+    "siteD_val_flagged": 0.0398,
+    "accepted": 19
+   },
+   {
+    "round": 20,
+    "val_macro_F1": 0.5572,
+    "siteD_val_flagged": 0.0398,
+    "accepted": 20
+   },
+   {
+    "round": 21,
+    "val_macro_F1": 0.5577,
+    "siteD_val_flagged": 0.038,
+    "accepted": 21
+   },
+   {
+    "round": 22,
+    "val_macro_F1": 0.5571,
+    "siteD_val_flagged": 0.0362,
+    "accepted": 22
+   },
+   {
+    "round": 23,
+    "val_macro_F1": 0.5582,
+    "siteD_val_flagged": 0.0362,
+    "accepted": 23
+   },
+   {
+    "round": 24,
+    "val_macro_F1": 0.5579,
+    "siteD_val_flagged": 0.0362,
+    "accepted": 24
+   },
+   {
+    "round": 25,
+    "val_macro_F1": 0.5584,
+    "siteD_val_flagged": 0.0362,
+    "accepted": 25
+   },
+   {
+    "round": 26,
+    "val_macro_F1": 0.5582,
+    "siteD_val_flagged": 0.0327,
+    "accepted": 26
+   },
+   {
+    "round": 27,
+    "val_macro_F1": 0.5578,
+    "siteD_val_flagged": 0.0353,
+    "accepted": 27
+   },
+   {
+    "round": 28,
+    "val_macro_F1": 0.5578,
+    "siteD_val_flagged": 0.0362,
+    "accepted": 28
+   },
+   {
+    "round": 29,
+    "val_macro_F1": 0.558,
+    "siteD_val_flagged": 0.0362,
+    "accepted": 29
+   },
+   {
+    "round": 30,
+    "val_macro_F1": 0.5581,
+    "siteD_val_flagged": 0.0362,
+    "accepted": 30
+   },
+   {
+    "round": 31,
+    "val_macro_F1": 0.5584,
+    "siteD_val_flagged": 0.0345,
+    "accepted": 31
+   }
+  ]
+ }
+}

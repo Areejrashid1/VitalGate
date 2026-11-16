@@ -12,6 +12,7 @@ class Forest:
         self._left, self._right, self._feat, self._cond, self._defl, self._val = [], [], [], [], [], []
         self.roots, self.tree_class, self.tree_scale = [], [], []
         self._n = 0
+        self.trees = []                # per tree: (left, right, feat, cond, default_left, cover, class, scale) for TreeSHAP
 
     def add_booster(self, path, scale=1.0):
         m = json.load(open(path, encoding="utf-8"))
@@ -32,6 +33,8 @@ class Forest:
             self._cond.append(cond); self._defl.append(np.asarray(tree["default_left"], bool))
             self._val.append(np.where(leaf, cond, 0).astype(np.float64))    # leaf value is stored in split_conditions
             self.roots.append(self._n); self.tree_class.append(int(cls)); self.tree_scale.append(float(scale))
+            self.trees.append((l.tolist(), r.tolist(), [int(v) for v in tree["split_indices"]], cond.tolist(),
+                               [bool(v) for v in tree["default_left"]], [float(v) for v in tree["sum_hessian"]], int(cls), float(scale)))
             self._n += len(l)
         return self
 

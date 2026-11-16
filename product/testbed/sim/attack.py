@@ -258,6 +258,10 @@ if __name__ == "__main__":
     a = p.parse_args()
     fn, novel = VARIANTS[a.label_class][a.variant]
     t0 = time.time()
+    # logged at the start as well, so a run killed before it ends (docker compose stop) is still in the ground truth
+    truth(file="truth_started.csv", run_id=a.run_id, site=SITE, label_class=a.label_class, variant=a.variant,
+          novel=int(novel), intensity=a.intensity, src_ip=my_ip(), src_host=socket.gethostname(),
+          dst_ip=socket.gethostbyname(PACS), start_ts=round(t0, 3), planned_end_ts=round(t0 + a.duration, 3))
     try:
         fn(a.variant, a.intensity, t0 + a.duration)
     finally:

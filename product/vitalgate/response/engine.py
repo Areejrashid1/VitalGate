@@ -10,18 +10,23 @@ CRIT_OF_ROLE_DEFAULT = {"PACS server": "critical", "modality": "high", "workstat
 
 class Inventory:
     """Asset inventory (NIST 800-207 'CDM'): ip -> role. JSON {"ip": "role", ...} or hosts.csv (ip, suggested_role)."""
-    def __init__(self, roles=None, crit_of_role=None):
+    def __init__(self, roles=None, crit_of_role=None, names=None, pacs=None, ignore=None, aets=None):
         self.roles = dict(roles or {}); self.crit_of_role = crit_of_role or CRIT_OF_ROLE_DEFAULT
+        self.names = dict(names or {}); self.pacs = pacs
+        self.ignore = list(ignore or []); self.aets = dict(aets or {})
 
     @classmethod
     def load(cls, path, crit_of_role=None):
         if str(path).endswith(".json"):
             d = json.load(open(path, encoding="utf-8"))
             cr = {**CRIT_OF_ROLE_DEFAULT, **d.get("criticality", {}), **(crit_of_role or {})}
-            return cls(d.get("roles", d), cr)
+            return cls(d.get("roles", d), cr, d.get("names"), d.get("pacs"), d.get("ignore"), d.get("aets"))
         import csv
         rows = csv.DictReader(open(path, encoding="utf-8-sig"))
         return cls({r["ip"]: r["suggested_role"] for r in rows}, crit_of_role)
+
+    def name(self, ip):
+        return self.names.get(ip) or ("Unregistered device" if ip not in self.roles else self.role(ip))
 
     def role(self, ip):
         return self.roles.get(ip, "unknown")
@@ -54,6 +59,22 @@ class ResponseEngine:
         if sev >= 3: return 4 if conf >= 0.9 else 3
         if sev == 2: return 3 if conf >= 0.9 else 2
         return 2 if conf >= 0.9 else 1
+
+    def expire(self, now):
+        """Clock-driven step-down for hosts that sent no window (gateway ipset timeouts run on the clock, fail-open).
+        Same rule as step(): one level down per TTL after the last alarm. Returns {ip: (new level, time the last step-down happened)} for changed hosts."""
+        changed = {}
+        for ip, h in self.hosts.items():
+            if h.cur == 0 or now - h.last_alarm < self.ttl: continue
+            old = h.cur
+            if self.mode == "binary":
+                h.cur = 0
+            else:
+                while h.cur > 0 and now - h.last_step >= self.ttl:
+                    h.cur -= 1; h.last_step += self.ttl
+            if h.cur == 0: h.ep_start = None
+            if h.cur != old: changed[ip] = (h.cur, h.last_step if self.mode != "binary" else h.last_alarm + self.ttl)
+        return changed
 
     def step(self, ip, t, score, atk, rule=False):
         """One window of one host. Returns (alarm, level in force after this window)."""

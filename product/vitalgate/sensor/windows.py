@@ -108,9 +108,10 @@ class WindowBuilder:
     final (training used 10 s; live use ~1 s so alerts are not delayed)."""
 
     def __init__(self, site, pacs_ip, dicom_port, http_port=8042, win=2, flush_lag=10.0, idle_drop=900.0,
-                 flush_every=30.0):
+                 flush_every=30.0, ignore=()):
         self.site, self.win, self.flush_lag, self.idle_drop, self.flush_every = site, win, flush_lag, idle_drop, flush_every
         self.pacs = socket.inet_aton(pacs_ip); self.dport = dicom_port; self.http = http_port
+        self.ignore = {socket.inet_aton(x) for x in ignore}   # infrastructure peers of the PACS (e.g. the quarantine store)
         self.rows, self.streams = {}, {}
         self.last_t = None; self.flushed_below = -1.0; self.next_flush = None; self.late = 0
 
@@ -149,7 +150,7 @@ class WindowBuilder:
         if not to_pacs and ip[12:16] != self.pacs:
             return []                                   # not PACS traffic (training capture only saw PACS traffic)
         client = ip[12:16] if to_pacs else ip[16:20]
-        if client == self.pacs:
+        if client == self.pacs or client in self.ignore:
             return []
         w = int(t // self.win) * self.win
         key = (client, w)

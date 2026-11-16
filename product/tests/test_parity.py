@@ -15,14 +15,21 @@ COLS = ["out_pkts", "out_bytes", "in_pkts", "in_bytes", "mean_pkt", "std_pkt", "
         "n_called_ae", "n_calling_ae", "bad_first_pdu", "big_pdu_len", "http_post", "preamble_exec"]
 
 p = argparse.ArgumentParser()
-p.add_argument("--data", required=True); p.add_argument("--ref", default=None, help="reference table (csv); default <data>/features.csv"); p.add_argument("--site", default="A"); p.add_argument("--files", type=int, default=6)
+p.add_argument("--data", required=True); p.add_argument("--ref", default=None, help="reference table (csv); default <data>/features.csv"); p.add_argument("--site", default="A"); p.add_argument("--files", type=int, default=6); p.add_argument("--gro", action="store_true", help="put the software-GRO normaliser in front of the sensor")
 a = p.parse_args()
 files = sorted(glob.glob(os.path.join(a.data, "pcap", f"site{a.site}_*.pcap")))[:a.files]
 wb = WindowBuilder(a.site, *PACS[a.site], flush_lag=10.0)
 rows, t0, last = [], time.time(), None
+from vitalgate.sensor.gro import Coalescer
+co = Coalescer() if a.gro else None
 for f in files:
     for t, ip in read_pcap(f):
-        rows += wb.feed(t, ip); last = t
+        last = t
+        for tt, pp in (co.feed(t, ip) if co else [(t, ip)]):
+            rows += wb.feed(tt, pp)
+if co:
+    for tt, pp in co.flush_all(): rows += wb.feed(tt, pp)
+    print("gro:", co.stats)
 rows += wb.flush_all()
 print(f"sensor: {len(files)} pcaps, {len(rows)} windows in {time.time() - t0:.1f}s")
 mine = pd.DataFrame(rows)

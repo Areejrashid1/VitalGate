@@ -1,0 +1,39 @@
+# VitalGate Policy Enforcement Point (PEP) for test-bed site A. Loaded by pep_agent.py into the PACS network namespace.
+# Per-device actions are elements of the four sets below, each with a timeout: the kernel removes an element when its
+# timeout ends, so every action expires by itself unless the controller renews it (fail-open).
+#   L1 watch      counted only
+#   L2 restrict   new DICOM connections limited to 30 per minute (packet limits would break image transfers)
+#   L3 quarantine DICOM uploads (port 104) redirected to the quarantine store 172.28.1.21; everything else dropped;
+#                 the PACS cannot open connections to the device
+#   L4 isolate    everything to and from the device dropped
+table ip vg {
+  set watch { type ipv4_addr; flags timeout; }
+  set rate  { type ipv4_addr; flags timeout; }
+  set quar  { type ipv4_addr; flags timeout; }
+  set iso   { type ipv4_addr; flags timeout; }
+  set rl    { type ipv4_addr; size 65535; flags dynamic,timeout; timeout 2m; }
+  chain vg_pre {
+    type nat hook prerouting priority dstnat; policy accept;
+    ip saddr @quar tcp dport 104 counter dnat to 172.28.1.21:104
+  }
+  chain vg_post {
+    type nat hook postrouting priority srcnat; policy accept;
+    ip daddr 172.28.1.21 tcp dport 104 counter masquerade
+  }
+  chain vg_in {
+    type filter hook input priority filter - 10; policy accept;
+    ip saddr @iso counter drop
+    ip saddr @quar counter drop
+    ip saddr @rate tcp dport 104 tcp flags & (syn|ack) == syn add @rl { ip saddr limit rate over 30/minute burst 10 packets } counter drop
+    ip saddr @watch counter
+  }
+  chain vg_fwd {
+    type filter hook forward priority filter - 10; policy accept;
+    ip saddr @iso counter drop
+  }
+  chain vg_out {
+    type filter hook output priority filter - 10; policy accept;
+    ip daddr @iso counter drop
+    ip daddr @quar ct state new counter drop
+  }
+}

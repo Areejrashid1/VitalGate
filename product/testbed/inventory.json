@@ -1,12 +1,46 @@
 {
- "_comment": "Asset inventory of the one-site test bed (NIST 800-207 CDM data source). Roles set the criticality cap of the response ladder. Written from docker-compose.yml, not learned from traffic.",
+ "_comment": "Asset inventory of the one-site test bed (NIST 800-207 CDM data source). Roles set the criticality cap of the response ladder; names are what the SOC sees. Written from docker-compose.yml, not learned from traffic.",
  "roles": {
   "172.28.1.20": "PACS server",
-  "172.28.1.31": "modality", "172.28.1.32": "modality", "172.28.1.33": "modality",
-  "172.28.1.34": "modality", "172.28.1.35": "modality",
-  "172.28.1.51": "workstation", "172.28.1.52": "workstation",
+  "172.28.1.31": "modality",
+  "172.28.1.32": "modality",
+  "172.28.1.33": "modality",
+  "172.28.1.34": "modality",
+  "172.28.1.35": "modality",
+  "172.28.1.51": "workstation",
+  "172.28.1.52": "workstation",
   "172.28.1.60": "monitoring",
-  "172.28.1.77": "unknown"
+  "172.28.1.77": "unknown",
+  "172.28.1.21": "quarantine store"
  },
- "criticality": {"monitoring": "medium"}
+ "names": {
+  "172.28.1.20": "PACS archive (VG_ARCHIVE)",
+  "172.28.1.31": "CT scanner (CT_SCAN31)",
+  "172.28.1.32": "MRI scanner (MR_SCAN32)",
+  "172.28.1.33": "CR X-ray (CR_SCAN33)",
+  "172.28.1.34": "Ultrasound (US_SCAN34)",
+  "172.28.1.35": "DX X-ray (DX_SCAN35)",
+  "172.28.1.51": "Reading workstation 1 (WS_READ01)",
+  "172.28.1.52": "Reading workstation 2 (WS_READ02)",
+  "172.28.1.60": "Network monitor (NMS_PROBE)",
+  "172.28.1.77": "Unregistered device",
+  "172.28.1.21": "Quarantine store (VG_QUARANTINE)"
+ },
+ "pacs": "172.28.1.20",
+ "criticality": {
+  "monitoring": "medium"
+ },
+ "ignore": [
+  "172.28.1.21"
+ ],
+ "aets": {
+  "CT_SCAN31": "172.28.1.31",
+  "MR_SCAN32": "172.28.1.32",
+  "CR_SCAN33": "172.28.1.33",
+  "US_SCAN34": "172.28.1.34",
+  "DX_SCAN35": "172.28.1.35",
+  "WS_READ01": "172.28.1.51",
+  "WS_READ02": "172.28.1.52",
+  "NMS_PROBE": "172.28.1.60"
+ }
 }

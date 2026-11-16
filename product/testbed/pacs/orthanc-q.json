@@ -1,0 +1,15 @@
+{
+  "Name": "VG-QUARANTINE-A",
+  "DicomAet": "VG_QUARANTINE",
+  "DicomPort": 104,
+  "HttpPort": 8042,
+  "RemoteAccessAllowed": true,
+  "AuthenticationEnabled": false,
+  "DicomCheckCalledAet": false,
+  "DicomAlwaysAllowEcho": true,
+  "DicomAlwaysAllowStore": true,
+  "UnknownSopClassAccepted": true,
+  "DicomScpTimeout": 30,
+  "OverwriteInstances": true,
+  "DicomModalities": { "pacs": [ "VG_ARCHIVE", "172.28.1.20", 104 ] }
+}

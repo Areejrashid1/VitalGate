@@ -12,6 +12,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from vitalgate.sensor.pcapio import read_pcap
 from vitalgate.sensor.windows import WindowBuilder
+from vitalgate.sensor.gro import Coalescer
 from vitalgate.sensor.history import OnlineHistory
 from vitalgate.model.bundle import Bundle
 from vitalgate.response.engine import ResponseEngine, Inventory
@@ -24,19 +25,31 @@ p.add_argument("--bundle", default="bundle"); p.add_argument("--out", default="e
 p.add_argument("--site", default="TB"); p.add_argument("--pacs-ip", default="172.28.1.20")
 p.add_argument("--dicom-port", type=int, default=104); p.add_argument("--http-port", type=int, default=8042)
 p.add_argument("--run-id", default=None, help="only attack runs of this campaign id (truth.csv run_id)")
+p.add_argument("--no-gro", action="store_true", help="feed raw packets (skip the software-GRO normaliser)")
+p.add_argument("--onboard-until", default=None,
+               help="'auto' = start of the first attack, or a unix time: learn per-host CUSUM references from the windows "
+                    "before it (benign-only onboarding period), then score only the windows after it")
+p.add_argument("--onboard-q", type=float, default=0.99, help="quantile of a host's onboarding scores used as its CUSUM k (-1 = keep the global k, only score the same period)")
 p.add_argument("--exclude-before", type=float, default=None, help="drop windows before this unix time (e.g. warm-up)")
 a = p.parse_args()
 out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
 T0 = time.time()
 
 # 1 · sensor: pcaps -> 2 s windows per client of the PACS (same code as the training extractor)
-files = sorted(Path(a.pcap_dir).glob(a.pattern))
+files = sorted({f for pat in a.pattern.split(",") for f in Path(a.pcap_dir).glob(pat.strip())})   # comma = several patterns
 if not files: sys.exit(f"no pcaps in {a.pcap_dir}")
-wb = WindowBuilder(a.site, a.pacs_ip, a.dicom_port, a.http_port, flush_lag=10.0)
+_inv = Inventory.load(a.inventory)
+wb = WindowBuilder(a.site, a.pacs_ip, a.dicom_port, a.http_port, flush_lag=10.0, ignore=_inv.ignore if hasattr(_inv, "ignore") else ())
 rows, npkt = [], 0
+co = None if a.no_gro else Coalescer()
 for f in files:
     for t, ip in read_pcap(f):
-        rows += wb.feed(t, ip); npkt += 1
+        npkt += 1
+        for tt, pp in (co.feed(t, ip) if co else [(t, ip)]):
+            rows += wb.feed(tt, pp)
+if co:
+    for tt, pp in co.flush_all(): rows += wb.feed(tt, pp)
+    print(f"gro: {co.stats['merged']:,} of {co.stats['in_pkts']:,} packets merged into larger ones")
 rows += wb.flush_all()
 if a.exclude_before: rows = [r for r in rows if r["window_start"] >= a.exclude_before]
 print(f"sensor: {len(files)} pcaps, {npkt:,} packets -> {len(rows):,} windows, {wb.late} late packets ({time.time()-T0:.0f}s)")
@@ -53,7 +66,17 @@ ip = np.array([r["client_ip"] for r in rows]); t = np.array([r["window_start"] f
 
 # 3 · ground truth: a window belongs to an attack run if it is the run's source host and overlaps its time span
 truth = list(csv.DictReader(open(a.truth, encoding="utf-8-sig"))) if Path(a.truth).exists() else []
-if a.run_id: truth = [r for r in truth if r["run_id"] == a.run_id]
+for r in truth: r["status"] = "complete"
+tdir = Path(a.truth).parent
+if (tdir / "truth_recovered.csv").exists():                   # runs reconstructed by hand (documented in the 'note' column)
+    for r in csv.DictReader(open(tdir / "truth_recovered.csv", encoding="utf-8-sig")):
+        r["status"] = "recovered"; truth.append(r)
+if (tdir / "truth_started.csv").exists():                     # started but never logged as finished = interrupted
+    done = {(r["run_id"], r["src_ip"], round(float(r["start_ts"]))) for r in truth}
+    for r in csv.DictReader(open(tdir / "truth_started.csv", encoding="utf-8-sig")):
+        if (r["run_id"], r["src_ip"], round(float(r["start_ts"]))) not in done:
+            r["end_ts"] = r["planned_end_ts"]; r["status"] = "interrupted"; truth.append(r)
+truth.sort(key=lambda r: float(r["start_ts"]))
 for k, r in enumerate(truth):
     r["key"] = f"{k:03d}|{r['label_class']}|{r['variant']}|{r['src_ip']}"
     r["start_ts"], r["end_ts"] = float(r["start_ts"]), float(r["end_ts"])
@@ -65,12 +88,30 @@ for i in range(len(rows)):
         if t[i] + 2 > r["start_ts"] and t[i] <= r["end_ts"]:
             lbl[i], run[i] = r["label_class"], r["key"]; break
 lbl, run = lbl.astype(str), run.astype(str)
+OTHER = np.zeros(len(rows), bool)
+if a.run_id:      # windows of OTHER campaigns are attack traffic, not benign: keep them in the pipeline, leave them out of the metrics
+    sel_keys = {r["key"] for r in truth if r["run_id"] == a.run_id}
+    OTHER = (run != "") & ~np.isin(run, list(sel_keys))
+    truth = [r for r in truth if r["run_id"] == a.run_id]
 span = (t.min(), t.max() + 2)
 out_of_scope = [r for r in truth if not (span[0] <= r["start_ts"] <= span[1])]
 truth = [r for r in truth if span[0] <= r["start_ts"] <= span[1]]
 if out_of_scope: print(f"note: {len(out_of_scope)} attack runs started outside the captured time span - excluded")
 T_START = {r["key"]: r["start_ts"] for r in truth}
 TR = {r["key"]: r for r in truth}
+
+# 3b · onboarding (optional): per-host CUSUM reference k from a benign-only period before any attack (notebook 06's
+#      "CUSUM per-host": k_host = max(global k, q99 of the host's benign scores), hosts with < 30 windows keep the global k)
+ONB = None
+if a.onboard_until:
+    cut = min(r["start_ts"] for r in truth) if a.onboard_until == "auto" else float(a.onboard_until)
+    k0 = float(b.policy["detector"]["kref"]); ref = {}
+    for x in sorted(set(ip)):
+        sx = score[(ip == x) & (t + 2 <= cut)]
+        if len(sx) >= 30 and a.onboard_q >= 0: ref[str(x)] = round(max(k0, float(np.quantile(sx, a.onboard_q))), 4)
+    b.policy["detector"]["per_host_k"] = ref
+    ONB = dict(until=cut, quantile=a.onboard_q, per_host_k=ref, windows=int((t + 2 <= cut).sum()))
+    print(f"onboarding: {ONB['windows']} windows before {time.strftime('%H:%M:%S', time.localtime(cut))} -> per-host k {ref}")
 
 # 4 · response: CUSUM + ladder (and binary blocking as the baseline), host by host in time order
 inv = Inventory.load(a.inventory)
@@ -86,6 +127,12 @@ for mode in ("ladder", "binary"):
         al[i], lv[i] = eng.step(ip[i], t[i], float(score[i]), atk[i], bool(rule[i]))
     alarm[mode], level[mode] = al, lv
     res[mode] = E.response_metrics(ip, t, lbl, run, lv, crit, sev, hours, t_start=T_START)
+if ONB or OTHER.any():                      # score only after the onboarding period / without other campaigns' windows
+    keep = ~OTHER & ((t + 2 > ONB["until"]) if ONB else True)
+    ip, t, lbl, run, score, atk, rule, crit = ip[keep], t[keep], lbl[keep], run[keep], score[keep], atk[keep], rule[keep], crit[keep]
+    alarm = {m: v[keep] for m, v in alarm.items()}; level = {m: v[keep] for m, v in level.items()}
+    hours = E.wallclock_hours(ip, t)
+    res = {m: E.response_metrics(ip, t, lbl, run, level[m], crit, sev, hours, t_start=T_START) for m in level}
 det, det_runs = E.detection_metrics(ip, t, lbl, run, alarm["ladder"], hours, t_start=T_START)
 _, cont_runs = res["ladder"]
 
@@ -96,7 +143,7 @@ for r in truth:
     m = run == k
     before = (ip == r["src_ip"]) & (t < r["start_ts"]) & (t >= r["start_ts"] - 600)
     lvl0 = int(level["ladder"][before][np.argmax(t[before])]) if before.any() else 0
-    RUNS.append(dict(run=k, label_class=r["label_class"], variant=r["variant"], novel=int(r["novel"]), intensity=r["intensity"],
+    RUNS.append(dict(run=k, status=r.get("status", "complete"), label_class=r["label_class"], variant=r["variant"], novel=int(r["novel"]), intensity=r["intensity"],
                      src_ip=r["src_ip"], src_role=inv.role(r["src_ip"]), duration_s=round(r["end_ts"] - r["start_ts"], 1),
                      windows=int(m.sum()), seen=bool(m.any()), detected=bool(d and d["hit"]),
                      ttd_s=round(d["delay"], 1) if d and d["hit"] else "", contained=bool(c and c["hit"]),
@@ -144,7 +191,7 @@ S = dict(created=time.strftime("%Y-%m-%d %H:%M:%S"), bundle=b.meta["frozen_at"],
                            benign_min_restricted_per_h=round(res[m][0]["benign_min_restricted_per_h"], 4),
                            clinical_min_blocked_per_h=round(res[m][0]["clinical_min_blocked_per_h"], 4),
                            false_actions_per_h=round(res[m][0]["false_actions_per_h"], 4)) for m in res},
-         window_level=win_level, by_novelty=group(lambda r: "novel" if r["novel"] else "known"),
+         onboarding=ONB, windows_of_other_campaigns_excluded=int(OTHER.sum()), window_level=win_level, by_novelty=group(lambda r: "novel" if r["novel"] else "known"),
          by_class=group(lambda r: r["label_class"]), by_variant=group(lambda r: f"{r['label_class']}/{r['variant']}{' (novel)' if r['novel'] else ''}"),
          by_intensity=group(lambda r: r["intensity"]), by_source=group(lambda r: r["src_role"]), benign_hosts=ben_hosts)
 (out / "summary.json").write_text(json.dumps(S, indent=1, default=str), encoding="utf-8")

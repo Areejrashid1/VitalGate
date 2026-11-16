@@ -13,3 +13,12 @@ mlruns/
 __pycache__/
 .ipynb_checkpoints/
 .venv/
+# VitalGate product: generated / large local data (keep out of git)
+product/testbed/out/
+product/soc/data/
+product/eval/results/*/windows.csv
+models_adapt*/
+models_v*/
+reports_v*/
+*.tmp
+*.lock

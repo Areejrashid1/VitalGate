@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VitalGate SOC</title>
+<style>
+:root{
+  --bg:#0d1015; --panel:#141920; --panel2:#1a2029; --line:#252d38; --text:#e7eaf0; --muted:#8c96a6; --faint:#596373;
+  --accent:#4cc2c4; --ok:#46b37b; --warn:#e3b341;
+  --l0:#3a4350; --l1:#4f8fe8; --l2:#e3b341; --l3:#ee8a3c; --l4:#e5534b;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box} html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:13px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;padding:9px 16px;border-bottom:1px solid var(--line);background:#0a0d11}
+.brand{font-weight:650;font-size:15px;letter-spacing:.2px} .brand b{color:var(--accent)}
+nav{display:flex;gap:2px;margin-left:10px}
+nav button{background:none;border:0;color:var(--muted);font:inherit;font-weight:550;padding:6px 12px;border-radius:6px;cursor:pointer}
+nav button.on{background:var(--panel2);color:var(--text)} nav button .n{background:var(--l4);color:#fff;border-radius:9px;padding:0 6px;font-size:11px;margin-left:5px}
+.pill{border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--muted);font-size:12px;white-space:nowrap}
+.pill.live{color:var(--ok);border-color:#2b5a43} .pill.replay{color:var(--warn);border-color:#5b4a1f} .pill.bad{color:var(--l4);border-color:#5d2b2b}
+.pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:6px;animation:pl 1.6s infinite}
+@keyframes pl{0%{box-shadow:0 0 0 0 #46b37b88}70%{box-shadow:0 0 0 7px #46b37b00}100%{box-shadow:0 0 0 0 #46b37b00}}
+.spacer{flex:1} .clock{font-family:var(--mono);color:var(--muted);font-size:12px}
+label.tog{display:flex;gap:6px;align-items:center;color:var(--muted);cursor:pointer;font-size:12px}
+.view{display:none;flex:1;min-height:0;padding:12px;gap:12px} .view.on{display:grid}
+#v-overview{grid-template-columns:minmax(0,1fr) 380px;grid-template-rows:auto minmax(0,1fr) auto}
+#v-incidents{grid-template-columns:minmax(0,1fr) 520px}
+#v-devices{grid-template-columns:minmax(0,1fr) 440px}
+#v-system{grid-template-columns:1fr;align-content:start;overflow:auto}
+section{background:var(--panel);border:1px solid var(--line);border-radius:9px;min-height:0;display:flex;flex-direction:column}
+section>h2{margin:0;padding:10px 13px;font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.scroll{overflow:auto;min-height:0;flex:1}
+.kpis{grid-column:1/3;display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px 13px}
+.kpi .v{font-size:23px;font-weight:650;font-variant-numeric:tabular-nums} .kpi .k{color:var(--muted);font-size:11.5px}
+.kpi.alert .v{color:var(--l4)}
+.lvl{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:20px;padding:0 6px;border-radius:4px;font-weight:650;font-size:11.5px;color:#0b0e13;white-space:nowrap}
+.L0{background:var(--l0);color:var(--text)} .L1{background:var(--l1)} .L2{background:var(--l2)} .L3{background:var(--l3)} .L4{background:var(--l4)}
+.st{font-size:11px;padding:1px 7px;border-radius:9px;border:1px solid var(--line);white-space:nowrap}
+.st.online{color:#7fd8a7;border-color:#2b5a43} .st.idle{color:var(--muted)} .st.offline{color:#f19b96;border-color:#5d2b2b} .st.notseen{color:var(--faint);border-style:dashed}
+.sev{font-size:11px;padding:1px 6px;border-radius:3px;border:1px solid var(--line);white-space:nowrap}
+.sev.high{color:#f19b96;border-color:#5d2b2b} .sev.medium{color:#f0cc6e;border-color:#5b4a1f} .sev.low{color:#8fb8f0;border-color:#24406a}
+.tag{font-size:11px;color:var(--muted);border:1px solid var(--line);padding:0 5px;border-radius:3px;margin-left:4px;white-space:nowrap}
+.tag.fa{color:#f19b96;border-color:#5d2b2b} .tag.ta{color:#7fd8a7;border-color:#2b5a43} .tag.truth{color:#c6a5f5;border-color:#45336a}
+.mono{font-family:var(--mono)} .muted{color:var(--muted)} .small{font-size:11.5px} .nw{white-space:nowrap}
+table{width:100%;border-collapse:collapse}
+th{position:sticky;top:0;background:var(--panel);text-align:left;font-weight:600;color:var(--muted);font-size:11.5px;padding:7px 10px;border-bottom:1px solid var(--line);z-index:1}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.click{cursor:pointer} tr.click:hover td{background:#18202a} tr.sel td{background:#1d2632}
+tr.fresh td{animation:fresh 3s ease-out}
+@keyframes fresh{from{background:#3a1d1d}to{background:transparent}}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--faint)} .dot.active{background:var(--l4);box-shadow:0 0 0 3px #e5534b22}
+.tools{display:flex;gap:6px;margin-left:auto}
+.tools button,.btn{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:5px 10px;font:inherit;font-size:12px;cursor:pointer}
+.tools button.on{border-color:var(--accent);color:var(--accent)}
+.btn:hover,.tools button:hover{border-color:#3a4554} .btn.good{border-color:#2b5a43;color:#7fd8a7} .btn.bad{border-color:#5d2b2b;color:#f19b96} .btn.done{opacity:.5}
+.devname{font-weight:550} .devip{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+/* network map */
+#map{width:100%;height:100%;display:block}
+#map .link{fill:none;stroke-linecap:round}
+#map .flow{stroke-dasharray:3 9;animation:flow 1.1s linear infinite}
+#map .flow.down{animation-direction:reverse}
+@keyframes flow{to{stroke-dashoffset:-24}}
+#map .node{cursor:pointer} #map .node:hover circle.body{stroke:var(--text)}
+#map text{font-family:system-ui,sans-serif} #map .nm{fill:var(--text);font-size:12px;font-weight:550} #map .ip{fill:var(--muted);font-size:10.5px;font-family:var(--mono)}
+#map .ring{fill:none;stroke-width:3} .alarmring{animation:ar 1.2s infinite} @keyframes ar{50%{stroke-opacity:.15}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:11.5px;padding:8px 13px;border-top:1px solid var(--line)}
+.legend i{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+/* feed */
+.ev{display:grid;grid-template-columns:58px 1fr;gap:8px;padding:8px 13px;border-bottom:1px solid var(--line);cursor:pointer}
+.ev:hover{background:#18202a} .ev .tm{font-family:var(--mono);color:var(--muted);font-size:11.5px}
+.ev .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;font-weight:650}
+.k.enforced{color:var(--accent)} .k.incident_opened,.k.level_up{color:var(--l4)} .k.level_down,.k.incident_closed{color:#7fd8a7} .k.device_offline,.k.new_device{color:var(--warn)} .k.device_online{color:var(--accent)}
+/* pipeline */
+.pipe{grid-column:1/3;display:grid;grid-template-columns:repeat(6,1fr);gap:0;background:var(--panel);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.stage{padding:9px 13px;border-right:1px solid var(--line);position:relative} .stage:last-child{border-right:0}
+.stage .t{font-weight:600;font-size:12px;display:flex;align-items:center;gap:7px} .stage .d{color:var(--muted);font-size:11.5px;margin-top:2px}
+.light{width:8px;height:8px;border-radius:50%;background:var(--ok)} .light.warn{background:var(--warn)} .light.bad{background:var(--l4)} .light.off{background:var(--faint)}
+.stage:not(:last-child)::after{content:"›";position:absolute;right:-6px;top:50%;transform:translateY(-50%);color:var(--faint);font-size:18px;background:var(--panel);z-index:1}
+/* detail */
+.detail{padding:14px 16px}
+.detail h3{margin:0;font-size:17px} .detail .sub{color:var(--muted);margin:3px 0 10px}
+.summary{display:grid;gap:8px;margin:6px 0 4px}
+.sum{display:grid;grid-template-columns:110px 1fr;gap:10px;background:var(--panel2);border-radius:7px;padding:9px 11px}
+.sum .h{color:var(--muted);font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding-top:1px}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.fact{background:var(--panel2);border-radius:7px;padding:7px 10px} .fact .v{font-weight:650;font-size:14px} .fact .k{color:var(--muted);font-size:11px}
+.block{border-top:1px solid var(--line);padding:12px 0}
+.block>.t{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;font-weight:600}
+.reason{display:grid;grid-template-columns:22px 1fr;gap:8px;margin:7px 0}
+.reason .n{width:20px;height:20px;border-radius:50%;background:var(--panel2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:650;color:var(--accent)}
+.reason .cmp{color:var(--muted);font-size:12px}
+.vs{display:inline-block;font-family:var(--mono);font-size:12px}
+.gb{display:grid;grid-template-columns:170px 1fr;gap:8px;align-items:center;margin:4px 0;font-size:12px}
+.gb .track{height:8px;background:var(--panel2);border-radius:3px;position:relative} .gb .track i{position:absolute;top:0;bottom:0;border-radius:3px}
+details{margin-top:6px} summary{cursor:pointer;color:var(--muted);font-size:12px}
+pre{margin:4px 0 0;background:#0a0d11;border:1px solid var(--line);border-radius:6px;padding:7px 9px;font:11.5px/1.5 var(--mono);color:#b8c4d3;white-space:pre-wrap}
+.act{display:grid;grid-template-columns:62px 40px 1fr;gap:8px;margin:7px 0;align-items:start}
+textarea{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:7px 9px;font:inherit;resize:vertical;min-height:48px}
+.empty{color:var(--faint);padding:30px;text-align:center}
+svg.chart text{fill:var(--muted);font-size:10px;font-family:var(--mono)}
+.lg{display:flex;gap:12px;color:var(--muted);font-size:11px;margin-top:4px} .lg i{display:inline-block;width:10px;height:3px;margin-right:4px;vertical-align:middle}
+/* system */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:13px 15px}
+.card h4{margin:0 0 4px;font-size:13.5px;display:flex;gap:8px;align-items:center} .card p{margin:0 0 8px;color:var(--muted);font-size:12px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12px} .kv span:nth-child(odd){color:var(--muted)} .kv span:nth-child(even){font-family:var(--mono)}
+/* toast */
+#toasts{position:fixed;right:16px;top:58px;display:flex;flex-direction:column;gap:8px;z-index:20}
+.toast{background:#2a1416;border:1px solid #6b2a2a;border-left:4px solid var(--l4);color:var(--text);padding:10px 13px;border-radius:7px;width:360px;box-shadow:0 6px 24px #0008;cursor:pointer;animation:tin .25s ease-out}
+.toast .k{color:#f19b96;font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.5px}
+@keyframes tin{from{transform:translateX(30px);opacity:0}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Vital<b>Gate</b> · SOC</div>
+  <nav>
+    <button data-v="overview" class="on">Overview</button>
+    <button data-v="incidents">Incidents<span class="n" id="nb-inc" hidden></span></button>
+    <button data-v="devices">Devices</button>
+    <button data-v="system">System</button>
+  </nav>
+  <span class="pill" id="src">connecting…</span>
+  <span class="pill small" id="bundle">model —</span>
+  <div class="spacer"></div>
+  <label class="tog" title="Show the test-bed ground truth next to incidents (evaluation only)"><input type="checkbox" id="evalmode"> evaluation mode</label>
+  <span class="clock" id="clock">—</span>
+</header>
+
+<div class="view on" id="v-overview">
+  <div class="kpis" id="kpis"></div>
+  <section>
+    <h2>Network: live traffic to the PACS <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">· click a device for details</span></h2>
+    <div class="scroll" style="overflow:hidden"><svg id="map"></svg></div>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>normal traffic</span><span><i style="background:var(--l2)"></i>suspicious (model score ≥ 0.5)</span>
+      <span><i style="background:var(--l4)"></i>alarm / under action</span><span><i style="background:var(--faint);height:1px"></i>idle</span>
+      <span>line width = traffic volume · moving dashes = direction</span><span>ring = status (green online · grey idle · red offline)</span><span>lock = rule confirmed in the gateway · ✕ = cut off</span>
+    </div>
+  </section>
+  <section>
+    <h2>Live events <span class="muted" id="nev"></span></h2>
+    <div class="scroll" id="feed"></div>
+  </section>
+  <div class="pipe" id="pipe"></div>
+</div>
+
+<div class="view" id="v-incidents">
+  <section>
+    <h2>Incidents <span class="muted" id="ninc"></span>
+      <div class="tools"><button data-f="active" class="on">Active</button><button data-f="open">Needs review</button><button data-f="all">All</button></div>
+    </h2>
+    <div class="scroll"><table><thead><tr><th></th><th>Incident</th><th>Device</th><th>What it looks like</th><th>Response</th><th>Confidence</th><th>Started</th><th>Duration</th><th>Review</th></tr></thead>
+    <tbody id="rows"></tbody></table></div>
+  </section>
+  <section><h2>Incident detail</h2><div class="scroll" id="detail"><div class="empty">Select an incident</div></div></section>
+</div>
+
+<div class="view" id="v-devices">
+  <section>
+    <h2>Devices <span class="muted" id="ndev"></span></h2>
+    <div class="scroll"><table><thead><tr><th>Device</th><th>Role</th><th>Status</th><th>Sent (last min)</th><th>Received (last min)</th><th>Errors (5 min)</th><th>Model score</th><th>Level</th><th>Gateway</th><th>Incidents</th></tr></thead>
+    <tbody id="drows"></tbody></table></div>
+  </section>
+  <section><h2>Device detail</h2><div class="scroll" id="ddetail"><div class="empty">Select a device</div></div></section>
+</div>
+
+<div class="view" id="v-system"><div class="cards" id="cards"></div></div>
+<div id="toasts"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const LEVEL = ["allow","watch","restrict","quarantine","isolate"];
+const LEVEL_PLAIN = ["normal access","extra logging, SOC ticket opened","DICOM traffic slowed down (rate-limited)","cut off from everything except sending images to its own PACS","completely cut off from the network"];
+const CAP = {critical:2, high:3, medium:4, low:4};
+const CHECK = {
+  recon:"Is this device supposed to scan the network? Scanning the PACS is a typical first step of an attack. If not expected, inspect the device.",
+  ae_bruteforce:"Check the device's configured AE title. If it is not a misconfiguration, someone is guessing DICOM names to get access.",
+  assoc_flood:"Check that the scanners can still reach the PACS. Many half-used DICOM sessions can block real scanners.",
+  malformed_pdu:"Broken DICOM messages: fuzzing or a faulty device driver. Check the device's software and the PACS logs.",
+  exfiltration:"Ask radiology whether this download was expected (e.g. a research export). If not, patient images may be leaving.",
+  ransomware_like:"Check the PACS immediately for studies that were deleted or rewritten.",
+  preamble_polyglot:"A DICOM file containing a hidden program was uploaded. Remove it from the PACS and scan the uploading device."
+};
+const FEAT = {
+  out_pkts:["packets sent to the PACS","n"], out_bytes:["data sent to the PACS","b"], in_pkts:["packets received from the PACS","n"],
+  in_bytes:["data received from the PACS","b"], mean_pkt:["average packet size","b"], std_pkt:["packet size variation","b"],
+  mean_iat_ms:["time between packets","ms"], std_iat_ms:["timing variation","ms"], syn:["new connections opened","n"],
+  rst:["connections refused/reset by the PACS","n"], fin:["connections closed","n"], n_dst_ports:["different PACS ports contacted","n"],
+  n_src_ports:["parallel connections","n"], assoc_rq:["DICOM session requests","n"], assoc_ac:["DICOM sessions accepted","n"],
+  assoc_rj:["DICOM sessions rejected","n"], abort:["DICOM sessions aborted","n"], release:["DICOM sessions closed normally","n"],
+  pdata_pkts:["DICOM data messages","n"], n_called_ae:["different PACS names (AE titles) called","n"], n_calling_ae:["different AE titles used","n"],
+  bad_first_pdu:["connections without a proper DICOM handshake","n"], big_pdu_len:["oversized handshake messages","n"],
+  bytes_per_pkt:["bytes per packet","b"], out_in_byte_ratio:["upload ÷ download ratio","r"], assoc_accept_ratio:["share of DICOM sessions accepted","p"],
+  rst_syn_ratio:["resets per new connection","r"], gap_s:["seconds since the device's previous activity","s"], gap_lag1:["previous pause length","s"]
+};
+const GROUP_PLAIN = {"Association setup":"DICOM session setup","Rejects & AE titles":"Rejected sessions & AE names","PDU anomalies":"Broken DICOM messages",
+  "Outbound volume":"Data sent to the PACS","Inbound volume":"Data received from the PACS","DICOM data transfer":"DICOM image transfer",
+  "Packet size & timing":"Packet sizes & timing","Scanning / TCP flags":"Connections & port scanning"};
+
+let S = null, view = "overview", sel = null, dsel = null, filter = "active", evalMode = false, noteDirty = false;
+let known = null, lastEvent = 0;
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const tm = t => t ? new Date(t*1000).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}) : "—";
+const dur = s => s < 60 ? `${Math.round(s)} s` : s < 3600 ? `${Math.floor(s/60)} min ${Math.round(s%60)} s` : `${(s/3600).toFixed(1)} h`;
+const lv = n => `<span class="lvl L${n}" title="L${n} ${LEVEL[n]}: ${LEVEL_PLAIN[n]}">L${n} ${LEVEL[n]}</span>`;
+const lvs = n => `<span class="lvl L${n}" title="L${n} ${LEVEL[n]}">L${n}</span>`;
+const bytes = v => v == null ? "—" : v < 1024 ? `${Math.round(v)} B` : v < 1048576 ? `${(v/1024).toFixed(v<10240?1:0)} KB` : `${(v/1048576).toFixed(1)} MB`;
+function fval(f, v){
+  if (v == null || isNaN(v)) return "—";
+  const u = (FEAT[f.replace(/_lag[12]$/,"")] || [, "n"])[1];
+  if (u === "b") return bytes(v); if (u === "ms") return `${v.toFixed(v<10?2:0)} ms`; if (u === "s") return `${Math.round(v)} s`;
+  if (u === "p") return `${Math.round(100*Math.min(v,1))}%`; if (u === "r") return v < 10 ? v.toFixed(2) : Math.round(v).toLocaleString();
+  return Math.round(v).toLocaleString();
+}
+function fname(f){
+  const base = f.replace(/_lag[12]$/,""), when = f.endsWith("_lag1") ? " (previous window)" : f.endsWith("_lag2") ? " (two windows earlier)" : "";
+  return ((FEAT[base]||[base])[0]) + when;
+}
+const conf = p => p >= .9 ? "high" : p >= .7 ? "medium" : "low";
+const fb = id => (S.feedback||{})[id] || {};
+const host = ip => (S.hosts||[]).find(h => h.ip === ip) || {ip, name: ip, role: "unknown"};
+const devcell = (name, ip) => `<div class="devname">${esc(name)}</div><div class="devip">${esc(ip)}</div>`;
+
+async function poll(){
+  try { const r = await fetch("/api/state", {cache:"no-store"}); S = await r.json(); notify(); render(); }
+  catch(e){ $("#src").className = "pill bad"; $("#src").textContent = "dashboard server offline"; }
+}
+function notify(){
+  const ids = new Set((S.incidents||[]).map(i => i.id));
+  if (known) for (const i of S.incidents) if (!known.has(i.id)) toast(i);
+  known = ids;
+}
+function toast(i){
+  const e = i.explanations[i.explanations.length-1] || {};
+  const d = document.createElement("div"); d.className = "toast";
+  d.innerHTML = `<div class="k">New incident · ${i.id}</div><div style="margin:3px 0"><b>${esc(e.headline || i.cls)}</b></div>
+    <div class="small">${esc(i.name)} <span class="devip">${esc(i.host)}</span> → ${lvs(i.level)} ${LEVEL[i.level]}</div>`;
+  d.onclick = () => { sel = i.id; go("incidents"); d.remove(); };
+  $("#toasts").prepend(d); setTimeout(() => d.remove(), 7000);
+}
+
+function render(){
+  const m = S.meta || {}, sys = S.system || {};
+  const live = m.source === "live", stale = live && sys.sensor && sys.sensor.packet_age_s > 15;
+  $("#src").className = "pill " + (stale ? "bad" : live ? "live" : "replay");
+  $("#src").innerHTML = stale ? "live · no traffic for " + Math.round(sys.sensor.packet_age_s) + " s" : live ? '<span class="pulse"></span>live' : "replay";
+  $("#bundle").textContent = "model " + (m.bundle_dir || "bundle") + " · " + (m.bundle || "").slice(0,16);
+  $("#clock").textContent = S.data_time ? new Date(S.data_time*1000).toLocaleString([], {hour12:false}) : "—";
+  const active = (S.incidents||[]).filter(i => i.status === "active");
+  $("#nb-inc").hidden = !active.length; $("#nb-inc").textContent = active.length;
+  if (view === "overview") renderOverview();
+  if (view === "incidents") renderIncidents();
+  if (view === "devices") renderDevices();
+  if (view === "system") renderSystem();
+}
+
+/* ---------------- overview ---------------- */
+function renderOverview(){
+  const inc = S.incidents||[], hosts = S.hosts||[];
+  const active = inc.filter(i => i.status === "active"), reviewed = inc.filter(i => fb(i.id).verdict);
+  const fa = reviewed.filter(i => fb(i.id).verdict === "false_alarm").length;
+  const online = hosts.filter(h => h.status === "online").length;
+  const k = [
+    [active.length, "active incidents", active.length > 0],
+    [hosts.filter(h => h.level >= 3).length, "devices quarantined or isolated", hosts.some(h => h.level >= 3)],
+    [hosts.filter(h => h.level >= 1 && h.level <= 2).length, "devices watched or restricted"],
+    [`${online}/${hosts.length}`, "devices online"],
+    [inc.filter(i => !fb(i.id).ack).length, "incidents not yet acknowledged"],
+    [reviewed.length ? Math.round(100*fa/reviewed.length) + "%" : "—", `false alarms (of ${reviewed.length} reviewed)`],
+  ];
+  $("#kpis").innerHTML = k.map(([v,t,a]) => `<div class="kpi ${a?'alert':''}"><div class="v">${v}</div><div class="k">${t}</div></div>`).join("");
+  drawMap();
+  const ev = S.events || [];
+  $("#nev").textContent = ev.length ? `${ev.length} latest` : "";
+  $("#feed").innerHTML = ev.slice(0, 120).map(e => `<div class="ev" data-inc="${e.incident||''}" data-host="${esc(e.host)}">
+      <span class="tm">${tm(e.t)}</span><div><div class="k ${e.kind}">${e.kind.replace(/_/g," ")}</div><div>${esc(e.text)}</div></div></div>`).join("")
+    || `<div class="empty">No events yet</div>`;
+  drawPipe();
+}
+
+function rate(h, secs=20){
+  const s = h.series || [], t1 = S.data_time || 0;
+  let o = 0, i = 0; for (const r of s) if (r[0] > t1 - secs) { o += r[1]; i += r[2]; }
+  return {o: o/secs, i: i/secs};
+}
+function gw(ip){                                   // what the PEP agent reports from the kernel
+  const sets = ((S.system||{}).pep||{}).sets || {};
+  for (const [name, lvl, word] of [["iso",4,"isolated"],["quar",3,"quarantined"],["rate",2,"throttled"],["watch",1,"watched"]])
+    if (sets[name] && ip in sets[name]) return {lvl, word, left: sets[name][ip]};
+  return null;
+}
+const enforcing = () => ((S.system||{}).pep||{}).mode === "enforcing";
+function linkColor(h){
+  const s = h.series || [], recent = s.filter(r => r[0] > (S.data_time||0) - 20);
+  if (h.level >= 1 || recent.some(r => r[5])) return "var(--l4)";
+  if (recent.some(r => r[3] >= .5)) return "var(--l2)";
+  return recent.length ? "var(--accent)" : "var(--faint)";
+}
+function drawMap(){
+  const svg = $("#map"), W = svg.clientWidth || 900, H = svg.clientHeight || 480;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const hosts = S.hosts || [], cx = W*0.47, cy = H*0.5, pacsX = W*0.86;
+  const groups = {modality:[], workstation:[], other:[]};
+  hosts.forEach(h => (h.role === "modality" ? groups.modality : h.role === "workstation" ? groups.workstation : groups.other).push(h));
+  const pos = {}, R = Math.min(W*0.36, H*0.42);
+  const place = (arr, a0, a1) => arr.forEach((h, k) => { const a = a0 + (a1 - a0) * (arr.length === 1 ? .5 : k/(arr.length-1));
+    pos[h.ip] = [cx + R*Math.cos(a), cy + R*Math.sin(a)]; });
+  place(groups.modality, Math.PI*0.62, Math.PI*1.38);
+  place(groups.workstation, -Math.PI*0.38, -Math.PI*0.14);
+  place(groups.other, Math.PI*0.14, Math.PI*0.38);
+  let links = "", nodes = "";
+  const qX = pacsX + 75, qY = cy + Math.min(180, H * 0.34), qState = ((S.system||{}).pep||{}).quarantine || {};
+  let qLinks = "";
+  hosts.forEach(h => {
+    const [x, y] = pos[h.ip], r = rate(h), tot = r.o + r.i, w = tot ? Math.min(2 + Math.log10(1 + tot/500)*2.2, 11) : 1.2;
+    const g = enforcing() ? gw(h.ip) : null;
+    const col = g ? ["", "var(--l1)", "var(--l2)", "var(--l3)", "var(--l4)"][g.lvl] : linkColor(h), act = tot > 0;
+    const mx = cx + (x - cx) * 0.62, my = cy + (y - cy) * 0.62;     // labels sit near the device end of its link
+    if (g && g.lvl === 4) {                                       // isolated: link cut at the gateway
+      links += `<line class="link" x1="${x}" y1="${y}" x2="${cx}" y2="${cy}" stroke="var(--l4)" stroke-width="2.5" stroke-dasharray="6 6"/>
+        <g transform="translate(${cx + (x - cx) * 0.22},${cy + (y - cy) * 0.22})"><circle r="11" fill="var(--bg)" stroke="var(--l4)" stroke-width="2"/><path d="M-5 -5L5 5M5 -5L-5 5" stroke="var(--l4)" stroke-width="2.5"/></g>
+        <text class="ip" x="${mx}" y="${my - 8}" text-anchor="middle" style="fill:var(--l4);font-weight:600">blocked</text>`;
+    } else {
+      links += `<line class="link" x1="${x}" y1="${y}" x2="${cx}" y2="${cy}" stroke="${col}" stroke-opacity="${act?.35:.5}" stroke-width="${w}"/>`;
+      if (r.o > 0) links += `<line class="link flow" x1="${x}" y1="${y}" x2="${cx}" y2="${cy}" stroke="${col}" stroke-width="${Math.max(1.5, w*.45)}"/>`;
+      if (r.i > 0 && !(g && g.lvl === 3)) links += `<line class="link flow down" x1="${x}" y1="${y}" x2="${cx}" y2="${cy}" stroke="${col}" stroke-opacity=".7" stroke-width="${Math.max(1.2, w*.3)}" stroke-dashoffset="6"/>`;
+      if (g && g.lvl === 2) links += `<text class="ip" x="${mx}" y="${my - 8}" text-anchor="middle" style="fill:var(--l2);font-weight:600">throttled</text>`;
+      if (g && g.lvl === 3) {
+        links += `<text class="ip" x="${mx}" y="${my - 8}" text-anchor="middle" style="fill:var(--l3);font-weight:600">DICOM → quarantine</text>`;
+        qLinks += `<path class="link flow" d="M${cx + 20} ${cy + 24} Q ${cx + 40} ${qY} ${cx + 160} ${qY} L ${qX - 75} ${qY}" fill="none" stroke="var(--l3)" stroke-width="2"/>`;
+      }
+    }
+    const ring = {online:"var(--ok)", idle:"var(--faint)", offline:"var(--l4)"}[h.status] || "var(--line)";
+    const lvc = ["var(--panel2)","var(--l1)","var(--l2)","var(--l3)","var(--l4)"][h.level];
+    const left = x < cx, tx = left ? x - 30 : x + 30, anchor = left ? "end" : "start";
+    const lock = g ? `<g transform="translate(${x + 13},${y - 19})"><circle r="9" fill="var(--bg)" stroke="${col}" stroke-width="1.5"/><rect x="-4" y="-1" width="8" height="6" rx="1" fill="${col}"/><path d="M-2.5 -1v-2.2a2.5 2.5 0 0 1 5 0v2.2" fill="none" stroke="${col}" stroke-width="1.5"/></g>` : "";
+    nodes += `<g class="node" data-ip="${h.ip}">
+      ${h.level >= 3 ? `<circle cx="${x}" cy="${y}" r="27" fill="none" stroke="var(--l4)" stroke-width="2" class="alarmring"/>` : ""}
+      <circle class="ring" cx="${x}" cy="${y}" r="21" stroke="${ring}" ${h.status==='not seen'?'stroke-dasharray="3 3"':''}/>
+      <circle class="body" cx="${x}" cy="${y}" r="17" fill="${lvc}" stroke="var(--line)"/>
+      <text x="${x}" y="${y+4}" text-anchor="middle" style="font-size:11px;font-weight:700;fill:${h.level?'#0b0e13':'var(--muted)'}">${h.level ? "L"+h.level : icon(h)}</text>${lock}
+      <text class="nm" x="${tx}" y="${y-2}" text-anchor="${anchor}">${esc(h.name.replace(/ \(.*\)/,""))}</text>
+      <text class="ip" x="${tx}" y="${y+12}" text-anchor="${anchor}">${esc(h.ip)} · ${g ? `<tspan style="fill:${col};font-weight:600">${g.word} ${g.left}s</tspan>` : h.status}${!g && r.o+r.i ? " · " + bytes(r.o+r.i) + "/s" : ""}</text></g>`;
+  });
+  if (enforcing()) nodes += `<g><rect x="${qX - 75}" y="${qY - 26}" width="150" height="52" rx="9" fill="var(--panel2)" stroke="var(--l3)" stroke-dasharray="${(qState.held||0) ? 0 : 4}"/>
+      <text x="${qX}" y="${qY - 6}" text-anchor="middle" class="nm">Quarantine store</text>
+      <text x="${qX}" y="${qY + 10}" text-anchor="middle" class="ip">${qState.held||0} held · ${qState.released||0} released</text></g>`;
+  links += qLinks;
+  const pr = (S.hosts||[]).reduce((a, h) => { const r = rate(h); return a + r.o + r.i; }, 0);
+  links += `<line class="link" x1="${cx}" y1="${cy}" x2="${pacsX}" y2="${cy}" stroke="var(--accent)" stroke-opacity=".4" stroke-width="${pr ? Math.min(3 + Math.log10(1+pr/500)*2.5, 14) : 2}"/>`;
+  if (pr) links += `<line class="link flow" x1="${cx}" y1="${cy}" x2="${pacsX}" y2="${cy}" stroke="var(--accent)" stroke-width="2.5"/>`;
+  const sensorX = (cx + pacsX)/2;
+  nodes += `<g><rect x="${cx-62}" y="${cy-24}" width="124" height="48" rx="9" fill="var(--panel2)" stroke="var(--accent)"/>
+      <text x="${cx}" y="${cy-3}" text-anchor="middle" class="nm">Gateway</text><text x="${cx}" y="${cy+12}" text-anchor="middle" class="ip">${enforcing() ? "PEP · enforcing" : "PEP · simulated"}</text></g>
+    <g><circle cx="${sensorX}" cy="${cy-34}" r="9" fill="var(--panel2)" stroke="var(--accent)"/><line x1="${sensorX}" y1="${cy-25}" x2="${sensorX}" y2="${cy-3}" stroke="var(--accent)" stroke-dasharray="2 3"/>
+      <text x="${sensorX}" y="${cy-49}" text-anchor="middle" class="ip">VitalGate sensor</text></g>
+    <g><rect x="${pacsX-8}" y="${cy-30}" width="${Math.min(150, W-pacsX)}" height="60" rx="9" fill="var(--panel2)" stroke="var(--line)"/>
+      <text x="${pacsX+4}" y="${cy-8}" class="nm">PACS archive</text><text x="${pacsX+4}" y="${cy+7}" class="ip">${esc((S.pacs||{}).ip||"")}:${(S.pacs||{}).port||""}</text>
+      <text x="${pacsX+4}" y="${cy+21}" class="ip">${bytes(pr)}/s total</text></g>`;
+  svg.innerHTML = links + nodes;
+}
+const icon = h => ({modality:"▣", workstation:"▤", monitoring:"◎"}[h.role] || "?");
+
+function drawPipe(){
+  const s = S.system || {}, se = s.sensor || {}, mo = s.model || {}, re = s.response || {};
+  const live = s.mode === "live", age = se.packet_age_s;
+  const sensorLight = !live ? "" : age == null ? "off" : age > 15 ? "bad" : age > 5 ? "warn" : "";
+  const st = [
+    ["Capture", sensorLight, live ? (age != null ? `last packet ${age} s ago` : "waiting") : `replay · ${se.pcaps||0} pcaps`],
+    ["Normalise & windows", "", `${(se.windows||0).toLocaleString()} windows · 2 s each`],
+    ["Federated model", "", `${mo.updates||"—"} updates · ${mo.features||83} features${mo.score_ms!=null ? " · "+mo.score_ms+" ms" : ""}`],
+    ["CUSUM detector", "", `k ${re.kref ?? "—"} · h ${re.h ?? "—"}`],
+    ["Zero-trust ladder", (re.active ? "warn" : ""), `${re.active||0} hosts under action · TTL ${re.ttl_s||60} s`],
+    pepStage(s.pep || {}),
+  ];
+  $("#pipe").innerHTML = st.map(([t,l,d]) => `<div class="stage"><div class="t"><span class="light ${l}"></span>${t}</div><div class="d">${esc(d)}</div></div>`).join("");
+}
+
+function pepStage(p){
+  if (p.mode === "enforcing") {
+    const n = Object.values(p.sets || {}).reduce((a, v) => a + Object.keys(v || {}).length, 0), q = p.quarantine || {};
+    const stale = p.age_s > 5;
+    return ["Gateway (PEP)", stale ? "bad" : "", stale ? `agent silent for ${Math.round(p.age_s)} s` : `enforcing · ${n} entries · quarantine ${q.held||0} held, ${q.released||0} released`];
+  }
+  return ["Gateway (PEP)", "warn", p.mode === "no agent" ? "no PEP agent: commands shown only" : "simulated: commands shown, not executed"];
+}
+
+/* ---------------- incidents ---------------- */
+function renderIncidents(){
+  const inc = S.incidents || [];
+  let list = inc.slice().sort((a,b) => (b.status==="active") - (a.status==="active") || b.opened - a.opened);
+  if (filter === "active") list = list.filter(i => i.status === "active");
+  if (filter === "open") list = list.filter(i => !fb(i.id).verdict);
+  $("#ninc").textContent = `${list.length} of ${inc.length}`;
+  const now = S.data_time || 0;
+  $("#rows").innerHTML = list.map(i => {
+    const f = fb(i.id), end = i.closed || now || i.updated, e = i.explanations[i.explanations.length-1] || {};
+    const truth = evalMode ? `<div><span class="tag truth" title="ground truth (test bed)">truth: ${esc(i.truth.join(", ") || "?")}</span></div>` : "";
+    return `<tr class="click ${i.id===sel?'sel':''} ${now - i.opened < 6 ? 'fresh' : ''}" data-id="${i.id}">
+      <td><span class="dot ${i.status}"></span></td><td class="mono small nw">${i.id}</td>
+      <td>${devcell(i.name || i.host, i.host)}</td>
+      <td>${esc(e.headline || i.cls)} <span class="sev ${i.severity}">${i.severity}</span>${truth}</td>
+      <td class="nw">${lvs(i.level)} <span class="muted small">peak L${i.max_level}</span></td>
+      <td class="nw">${conf(i.max_score)} <span class="muted small mono">${Math.round(i.max_score*100)}%</span></td>
+      <td class="small nw mono">${tm(i.opened)}</td><td class="small nw">${dur(end - i.opened)}</td>
+      <td class="nw">${f.ack ? '<span class="tag">ack</span>' : ''}${f.verdict==="false_alarm" ? '<span class="tag fa">false alarm</span>' : f.verdict==="true_attack" ? '<span class="tag ta">confirmed</span>' : ''}</td></tr>`;
+  }).join("") || `<tr><td colspan="9" class="empty">${filter==="active" ? "No active incidents: all devices at normal access" : "Nothing here"}</td></tr>`;
+  if (!noteDirty) renderDetail();
+}
+
+function chart(T, W=470, H=96){
+  if (!T.length) return "";
+  const P = 24, t0 = T[0][0], t1 = Math.max(T[T.length-1][0], t0+2);
+  const x = t => P + (W-P-6)*(t-t0)/(t1-t0), ys = v => H-16-(H-26)*v, yl = l => H-16-(H-26)*l/4;
+  let a = "", st = "", pt = null;
+  T.forEach(r => { const X = x(r[0]).toFixed(1), n = pt === null || r[0]-pt > 60;
+    a += (n ? "M" : "L") + X + "," + ys(r[1]).toFixed(1); st += n ? `M${X},${yl(r[2]).toFixed(1)}` : `H${X}V${yl(r[2]).toFixed(1)}`; pt = r[0]; });
+  const al = T.filter(r => r[3]).map(r => `<rect x="${x(r[0])-1}" y="${H-14}" width="2" height="6" fill="var(--l4)"/>`).join("");
+  return `<svg class="chart" width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    ${[0,1,2,3,4].map(l => `<line x1="${P}" x2="${W}" y1="${yl(l)}" y2="${yl(l)}" stroke="var(--line)"/><text x="2" y="${yl(l)+3}">L${l}</text>`).join("")}
+    <path d="${a}" fill="none" stroke="var(--accent)" stroke-width="1.4"/><path d="${st}" fill="none" stroke="var(--l3)" stroke-width="2"/>${al}
+    <text x="${P}" y="${H-1}">${tm(t0)}</text><text x="${W-52}" y="${H-1}">${tm(t1)}</text></svg>
+    <div class="lg"><span><i style="background:var(--accent)"></i>how attack-like the traffic looked (0–1)</span><span><i style="background:var(--l3)"></i>response level</span><span><i style="background:var(--l4);width:2px;height:7px"></i>alarm</span></div>`;
+}
+
+function renderDetail(){
+  const i = (S.incidents||[]).find(x => x.id === sel);
+  if (!i) { $("#detail").innerHTML = `<div class="empty">Select an incident</div>`; return; }
+  const f = fb(i.id), e = i.explanations[i.explanations.length-1] || {}, now = S.data_time || i.updated;
+  const end = i.closed || now, cls = e.cls || i.cls;
+  const reasons = (e.groups || []).map((g, k) => `<div class="reason"><span class="n">${k+1}</span><div>
+      <div><b>${esc(GROUP_PLAIN[g.group] || g.group)}</b>: ${esc(fname(g.feature))}</div>
+      <div class="cmp"><span class="vs">${fval(g.feature, g.value)}</span> here vs <span class="vs">${fval(g.feature, g.benign_median)}</span> normally</div></div></div>`).join("")
+    || `<div class="muted">${esc(e.sentence || "")}</div>`;
+  const groups = Object.entries(e.all_groups || {}), mx = Math.max(.001, ...groups.map(([,v]) => Math.abs(v)));
+  const gbars = groups.map(([g,v]) => `<div class="gb"><span>${esc(GROUP_PLAIN[g] || g)}</span><span class="track"><i style="${v>=0
+      ? `left:50%;width:${50*v/mx}%;background:var(--l3)` : `right:50%;width:${50*-v/mx}%;background:var(--l1)`}"></i></span></div>`).join("");
+  const acts = i.actions.map(a => `<div class="act"><span class="small muted mono">${tm(a.t)}</span>${lvs(a.level)}
+      <div><b>${a.name}</b>: ${esc(LEVEL_PLAIN[a.level])}${a.applied ? ` <span class="tag ta" title="confirmed by the gateway agent">enforced ${tm(a.applied)}</span>` : ""}<details><summary>gateway commands</summary><pre>${esc(a.commands.join("\n"))}</pre></details></div></div>`).join("");
+  const peak = i.peak || {};
+  $("#detail").innerHTML = `<div class="detail">
+    <h3>${esc(e.headline || i.cls)}</h3>
+    <div class="sub">${i.id} · ${i.status === "active" ? '<span style="color:var(--l4)">● active</span>' : "closed " + tm(i.closed)}
+      ${evalMode ? `<span class="tag truth">truth: ${esc(i.truth.join(", "))}</span>` : ""}</div>
+    <div class="summary">
+      <div class="sum"><span class="h">What happened</span><div>At ${tm(i.opened)}, <b>${esc(i.name)}</b> <span class="devip">${esc(i.host)}</span> showed signs of
+        <b>${esc(e.headline||i.cls)}</b>. Confidence: <b>${conf(i.max_score)}</b> (${Math.round(i.max_score*100)}%).</div></div>
+      <div class="sum"><span class="h">What VitalGate did</span><div>${lvs(i.max_level)} at its peak: the device was <b>${esc(LEVEL_PLAIN[i.max_level])}</b>.
+        ${i.status === "active" ? `Now ${lvs(i.level)}.` : "All actions have expired; the device has normal access again."}
+        ${CAP[i.criticality] < 4 ? `<span class="muted">As a ${esc(i.role)}, it is never cut off further than L${CAP[i.criticality]} automatically.</span>` : ""}</div></div>
+      <div class="sum"><span class="h">What to check</span><div>${esc(CHECK[cls] || "Review the evidence below.")}</div></div>
+    </div>
+    <div class="facts">
+      <div class="fact"><div class="v">${dur(end - i.opened)}</div><div class="k">duration</div></div>
+      <div class="fact"><div class="v">${i.alarm_windows}/${i.windows}</div><div class="k">2-s windows alarming</div></div>
+      <div class="fact"><div class="v">${bytes(peak.out_bytes)}</div><div class="k">peak sent / 2 s</div></div>
+      <div class="fact"><div class="v">${bytes(peak.in_bytes)}</div><div class="k">peak received / 2 s</div></div>
+    </div>
+    <div class="block"><div class="t">Why the model raised it: top reasons</div>${reasons}
+      ${gbars ? `<details><summary>all evidence groups (SHAP)</summary><div style="margin-top:6px">${gbars}</div>
+        <div class="small muted">Orange pushes towards "${esc(cls)}", blue pushes towards normal.</div></details>` : ""}</div>
+    <div class="block"><div class="t">Timeline</div>${chart(i.timeline)}</div>
+    <div class="block"><div class="t">Actions taken</div>${acts}
+      <div class="small muted">Each action expires after 60 s unless the evidence continues, then steps down one level (fail-open). "enforced" = the gateway agent confirmed the rule in the kernel.</div></div>
+    <div class="block"><div class="t">Your review</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn ${f.ack?'done':''}" onclick="send('${i.id}',{ack:true})">${f.ack ? "Acknowledged" : "Acknowledge"}</button>
+        <button class="btn good ${f.verdict==='true_attack'?'done':''}" onclick="send('${i.id}',{verdict:'true_attack',ack:true})">Confirm attack</button>
+        <button class="btn bad ${f.verdict==='false_alarm'?'done':''}" onclick="send('${i.id}',{verdict:'false_alarm',ack:true})">False alarm</button>
+      </div>
+      <textarea id="note" placeholder="Note for the shift log / retraining label">${esc(f.note || "")}</textarea>
+      <div style="margin-top:6px;display:flex;gap:8px;align-items:center"><button class="btn" onclick="saveNote('${i.id}')">Save note</button>
+      <span class="small muted">Your verdicts become this hospital's labelled data for its next federated training round.</span></div>
+    </div></div>`;
+  $("#note").addEventListener("input", () => noteDirty = true);
+}
+async function send(id, body){
+  await fetch("/api/feedback/" + id, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  noteDirty = false; poll();
+}
+function saveNote(id){ send(id, {note: $("#note").value}); }
+
+/* ---------------- devices ---------------- */
+function renderDevices(){
+  const hosts = S.hosts || [], t1 = S.data_time || 0;
+  $("#ndev").textContent = hosts.length;
+  $("#drows").innerHTML = hosts.map(h => {
+    const s = h.series || [], m1 = s.filter(r => r[0] > t1 - 60), m5 = s.filter(r => r[0] > t1 - 300);
+    const o = m1.reduce((a,r) => a + r[1], 0), i = m1.reduce((a,r) => a + r[2], 0), err = m5.reduce((a,r) => a + r[6], 0);
+    const stc = h.status === "not seen" ? "notseen" : h.status;
+    return `<tr class="click ${h.ip===dsel?'sel':''}" data-ip="${h.ip}"><td>${devcell(h.name, h.ip)}</td><td class="small">${esc(h.role)}${h.registered ? "" : ' <span class="tag fa">unregistered</span>'}</td>
+      <td><span class="st ${stc}">${h.status}</span><div class="small muted">${h.last_seen ? "last seen " + tm(h.last_seen) : ""}</div></td>
+      <td class="mono">${bytes(o)}</td><td class="mono">${bytes(i)}</td>
+      <td class="mono" style="color:${err?'var(--warn)':'inherit'}">${err}</td>
+      <td class="mono">${h.last_seen ? Math.round(h.last_score*100) + "%" : "—"}</td><td>${lvs(h.level)}</td>
+      <td class="small nw">${(() => { const g = enforcing() ? gw(h.ip) : null; return g ? `<b style="color:${["","var(--l1)","var(--l2)","var(--l3)","var(--l4)"][g.lvl]}">${g.word}</b> · ${g.left}s left` : (enforcing() ? '<span class="muted">open</span>' : '<span class="muted">not enforced</span>'); })()}</td>
+      <td class="mono">${h.incidents||0}</td></tr>`;
+  }).join("");
+  const h = hosts.find(x => x.ip === dsel);
+  if (!h) { $("#ddetail").innerHTML = `<div class="empty">Select a device</div>`; return; }
+  const s = h.series || [], inc = (S.incidents||[]).filter(i => i.host === h.ip).slice(-6).reverse();
+  $("#ddetail").innerHTML = `<div class="detail"><h3>${esc(h.name)}</h3><div class="sub"><span class="devip">${esc(h.ip)}</span> · ${esc(h.role)} · criticality ${h.criticality}, automatic cap L${CAP[h.criticality]??4}</div>
+    <div class="facts"><div class="fact"><div class="v"><span class="st ${h.status==='not seen'?'notseen':h.status}">${h.status}</span></div><div class="k">status</div></div>
+      <div class="fact"><div class="v">${lvs(h.level)}</div><div class="k">current level</div></div>
+      <div class="fact"><div class="v">${(h.windows||0).toLocaleString()}</div><div class="k">windows seen</div></div>
+      <div class="fact"><div class="v">${h.alarms||0}</div><div class="k">alarm windows</div></div></div>
+    <div class="block"><div class="t">Traffic, recent activity</div>${traffic(s)}</div>
+    <div class="block"><div class="t">How attack-like its traffic looked</div>${chart(s.map(r => [r[0], r[3], r[4], r[5]]), 400, 90)}</div>
+    <div class="block"><div class="t">Incidents on this device</div>${inc.map(i => `<div class="ev" data-inc="${i.id}"><span class="tm">${tm(i.opened)}</span>
+      <div>${i.id} · ${esc((i.explanations.slice(-1)[0]||{}).headline || i.cls)} · peak ${lvs(i.max_level)} ${i.status==="active"?'<span style="color:var(--l4)">active</span>':''}</div></div>`).join("") || '<div class="muted">none</div>'}</div></div>`;
+}
+function traffic(s, W=400, H=110){
+  if (!s.length) return '<div class="muted">no traffic yet</div>';
+  const P = 34, t0 = s[0][0], t1 = Math.max(s[s.length-1][0], t0+2), mx = Math.max(1, ...s.map(r => Math.max(r[1], r[2])));
+  const x = t => P + (W-P-4)*(t-t0)/(t1-t0), y = v => H-14-(H-22)*Math.log10(1+v)/Math.log10(1+mx);
+  const line = k => { let d = "", pt = null; s.forEach(r => { d += (pt === null || r[0]-pt > 60 ? "M" : "L") + x(r[0]).toFixed(1) + "," + y(r[k]).toFixed(1); pt = r[0]; }); return d; };
+  const errs = s.filter(r => r[6]).map(r => `<rect x="${x(r[0])-1}" y="${H-12}" width="2" height="6" fill="var(--warn)"/>`).join("");
+  return `<svg class="chart" width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <text x="0" y="12">${bytes(mx)}</text><text x="0" y="${H-14}">0</text>
+    <path d="${line(1)}" fill="none" stroke="var(--accent)" stroke-width="1.4"/><path d="${line(2)}" fill="none" stroke="#c6a5f5" stroke-width="1.4"/>${errs}
+    <text x="${P}" y="${H-1}">${tm(t0)}</text><text x="${W-52}" y="${H-1}">${tm(t1)}</text></svg>
+    <div class="lg"><span><i style="background:var(--accent)"></i>sent to PACS (per 2 s, log scale)</span><span><i style="background:#c6a5f5"></i>received</span><span><i style="background:var(--warn);width:2px;height:7px"></i>protocol errors</span></div>`;
+}
+
+/* ---------------- system ---------------- */
+function renderSystem(){
+  const s = S.system || {}, se = s.sensor || {}, mo = s.model || {}, re = s.response || {}, m = S.meta || {};
+  const kv = o => `<div class="kv">${Object.entries(o).map(([k,v]) => `<span>${k}</span><span>${esc(v ?? "—")}</span>`).join("")}</div>`;
+  const live = s.mode === "live", age = se.packet_age_s;
+  const card = (title, light, desc, o) => `<div class="card"><h4><span class="light ${light}"></span>${title}</h4><p>${desc}</p>${kv(o)}</div>`;
+  $("#cards").innerHTML = [
+    card("1 · Capture", live ? (age > 15 ? "bad" : age > 5 ? "warn" : "") : "", "Copies every packet to and from the PACS (first 512 bytes: headers only, no images).",
+      {mode: s.mode, "current file": se.file || (se.pcaps ? se.pcaps + " pcaps" : "—"), packets: (se.packets||0).toLocaleString(),
+       "last packet": se.last_packet ? tm(se.last_packet) : "—", "packet age": age != null ? age + " s" : "—"}),
+    card("2 · Normalise & windows", "", "Rebuilds packets the way training saw them (software GRO), cuts traffic into 2-second windows per device and computes 83 features.",
+      {windows: (se.windows||0).toLocaleString(), "late packets": se.late ?? 0, "GRO merges": se.gro_merged ?? "—", "flush lag": (se.flush_lag_s ?? 10) + " s"}),
+    card("3 · Federated model", "", "Frozen federated XGBoost (trained by the hospitals together, k-of-n gate) + DPI rule for polyglot files; calibrated probabilities.",
+      {bundle: m.bundle_dir || "bundle", frozen: mo.bundle, updates: mo.updates, features: mo.features, temperature: mo.temperature, "time per window": mo.score_ms != null ? mo.score_ms + " ms" : "—"}),
+    card("4 · CUSUM detector", "", "Adds up evidence per device over time: one odd window is ignored, persistent evidence raises an alarm.",
+      {k: re.kref, h: re.h, "alarm windows": re.alarms ?? "—"}),
+    card("5 · Zero-trust ladder", re.active ? "warn" : "", "Severity × confidence × duration → L0–L4, capped by device criticality (PACS ≤ L2, scanners ≤ L3).",
+      {"hosts under action": re.active ?? 0, TTL: (re.ttl_s ?? 60) + " s (fail-open)", "active incidents": (S.incidents||[]).filter(i => i.status==="active").length}),
+    pepCard(s.pep || {}),
+  ].join("");
+}
+
+function pepCard(p){
+  const kv = o => `<div class="kv">${Object.entries(o).map(([k,v]) => `<span>${k}</span><span>${esc(v ?? "—")}</span>`).join("")}</div>`;
+  if (p.mode !== "enforcing")
+    return `<div class="card"><h4><span class="light warn"></span>6 · Gateway (PEP)</h4><p>Applies each level as nftables set entries with a timeout in the PACS network namespace. ${esc(p.note || "Not connected: commands are shown only.")}</p>${kv({mode: p.mode || "simulated"})}</div>`;
+  const sets = p.sets || {}, c = p.counters || {}, q = p.quarantine || {};
+  const list = s => Object.entries(sets[s] || {}).map(([ip, left]) => `${ip} (${left}s)`).join(", ") || "none";
+  const pk = k => (c[k] || {}).packets ?? 0;
+  return `<div class="card"><h4><span class="light ${p.age_s > 5 ? "bad" : ""}"></span>6 · Gateway (PEP)</h4>
+    <p>Real enforcement: nftables sets with per-entry timeouts in the PACS network namespace; the kernel removes an entry when its timeout runs out (fail-open).</p>
+    ${kv({"agent update": `${p.age_s} s ago`, "isolated (L4)": list("iso"), "quarantined (L3)": list("quar"), "restricted (L2)": list("rate"), "watched (L1)": list("watch"),
+      "packets dropped": `L4 ${pk("vg_in:iso:drop") + pk("vg_out:iso:drop")} · L3 ${pk("vg_in:quar:drop")} · L2 ${pk("vg_in:rate:drop")}`,
+      "uploads redirected": `${pk("vg_pre:quar:dnat")} DICOM connections to the quarantine store`,
+      "quarantine store": `${q.held||0} held · ${q.released||0} released · ${q.blocked||0} blocked`})}</div>`;
+}
+
+/* ---------------- navigation ---------------- */
+function go(v){ view = v; document.querySelectorAll("nav button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  document.querySelectorAll(".view").forEach(x => x.classList.toggle("on", x.id === "v-" + v)); if (S) render(); }
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => go(b.dataset.v));
+$("#rows").addEventListener("click", ev => { const tr = ev.target.closest("tr.click"); if (tr) { sel = tr.dataset.id; noteDirty = false; render(); } });
+$("#drows").addEventListener("click", ev => { const tr = ev.target.closest("tr.click"); if (tr) { dsel = tr.dataset.ip; render(); } });
+document.addEventListener("click", ev => {
+  const n = ev.target.closest("#map .node"); if (n) { dsel = n.dataset.ip; go("devices"); return; }
+  const e = ev.target.closest(".ev"); if (e && e.dataset.inc) { sel = e.dataset.inc; go("incidents"); }
+});
+document.querySelectorAll(".tools button").forEach(b => b.onclick = () => { filter = b.dataset.f;
+  document.querySelectorAll(".tools button").forEach(x => x.classList.toggle("on", x === b)); render(); });
+$("#evalmode").onchange = e => { evalMode = e.target.checked; render(); };
+window.addEventListener("resize", () => S && view === "overview" && drawMap());
+poll(); setInterval(poll, 1500);
+</script>
+</body>
+</html>

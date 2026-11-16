@@ -1,0 +1,446 @@
+{
+ "created": "2026-11-16 03:03:18",
+ "bundle": "2026-11-14 19:20:18",
+ "pcaps": 66,
+ "packets": 3697831,
+ "windows": 6801,
+ "host_hours": 21.55,
+ "hosts_not_in_inventory": [],
+ "attack_runs": 43,
+ "runs_outside_capture": 0,
+ "runs_already_restricted_at_start": 16,
+ "runs_not_seen_by_sensor": 0,
+ "detection": {
+  "runs": 43,
+  "detected": 36,
+  "false_episodes_per_h": 2.8303,
+  "median_TTD_s": 3.4
+ },
+ "response": {
+  "ladder": {
+   "contained": 36,
+   "runs": 43,
+   "median_TTC_s": 3.4,
+   "benign_min_restricted_per_h": 1.129,
+   "clinical_min_blocked_per_h": 0.0,
+   "false_actions_per_h": 1.4384
+  },
+  "binary": {
+   "contained": 36,
+   "runs": 43,
+   "median_TTC_s": 3.4,
+   "benign_min_restricted_per_h": 0.9001,
+   "clinical_min_blocked_per_h": 0.167,
+   "false_actions_per_h": 2.1807
+  }
+ },
+ "onboarding": {
+  "until": 1794719380.223,
+  "quantile": 0.5,
+  "per_host_k": {
+   "172.28.1.31": 0.6,
+   "172.28.1.32": 0.6,
+   "172.28.1.33": 0.6,
+   "172.28.1.34": 0.6,
+   "172.28.1.35": 0.6044,
+   "172.28.1.51": 0.6,
+   "172.28.1.52": 0.6,
+   "172.28.1.60": 0.6
+  },
+  "windows": 975
+ },
+ "window_level": {
+  "benign_windows": 3346,
+  "attack_windows": 2480,
+  "benign_flagged_share": 0.2349,
+  "attack_flagged_share": 0.7633
+ },
+ "by_novelty": [
+  {
+   "group": "known",
+   "runs": 15,
+   "detected": 13,
+   "ci95": "[60, 98]",
+   "contained": 13,
+   "median_TTD_s": 3.7,
+   "median_TTC_s": 3.7,
+   "class_correct": 0.733
+  },
+  {
+   "group": "novel",
+   "runs": 28,
+   "detected": 23,
+   "ci95": "[63, 94]",
+   "contained": 23,
+   "median_TTD_s": 3.3,
+   "median_TTC_s": 3.3,
+   "class_correct": 0.705
+  }
+ ],
+ "by_class": [
+  {
+   "group": "ae_bruteforce",
+   "runs": 5,
+   "detected": 5,
+   "ci95": "[48, 100]",
+   "contained": 5,
+   "median_TTD_s": 3.5,
+   "median_TTC_s": 3.5,
+   "class_correct": 0.979
+  },
+  {
+   "group": "assoc_flood",
+   "runs": 5,
+   "detected": 1,
+   "ci95": "[1, 72]",
+   "contained": 1,
+   "median_TTD_s": 0.7,
+   "median_TTC_s": 0.7,
+   "class_correct": 0.0
+  },
+  {
+   "group": "exfiltration",
+   "runs": 8,
+   "detected": 7,
+   "ci95": "[47, 100]",
+   "contained": 7,
+   "median_TTD_s": 9.6,
+   "median_TTC_s": 9.6,
+   "class_correct": 0.939
+  },
+  {
+   "group": "malformed_pdu",
+   "runs": 6,
+   "detected": 4,
+   "ci95": "[22, 96]",
+   "contained": 4,
+   "median_TTD_s": 3.8,
+   "median_TTC_s": 3.8,
+   "class_correct": 0.054
+  },
+  {
+   "group": "preamble_polyglot",
+   "runs": 7,
+   "detected": 7,
+   "ci95": "[59, 100]",
+   "contained": 7,
+   "median_TTD_s": 0.5,
+   "median_TTC_s": 0.5,
+   "class_correct": 0.861
+  },
+  {
+   "group": "ransomware_like",
+   "runs": 4,
+   "detected": 4,
+   "ci95": "[40, 100]",
+   "contained": 4,
+   "median_TTD_s": 3.45,
+   "median_TTC_s": 3.45,
+   "class_correct": 0.732
+  },
+  {
+   "group": "recon",
+   "runs": 8,
+   "detected": 8,
+   "ci95": "[63, 100]",
+   "contained": 8,
+   "median_TTD_s": 3.45,
+   "median_TTC_s": 3.45,
+   "class_correct": 0.639
+  }
+ ],
+ "by_variant": [
+  {
+   "group": "ae_bruteforce/echo_guess",
+   "runs": 2,
+   "detected": 2,
+   "ci95": "[16, 100]",
+   "contained": 2,
+   "median_TTD_s": 4.05,
+   "median_TTC_s": 4.05,
+   "class_correct": 1.0
+  },
+  {
+   "group": "ae_bruteforce/find_guess (novel)",
+   "runs": 3,
+   "detected": 3,
+   "ci95": "[29, 100]",
+   "contained": 3,
+   "median_TTD_s": 3.3,
+   "median_TTC_s": 3.3,
+   "class_correct": 0.966
+  },
+  {
+   "group": "assoc_flood/echo_storm (novel)",
+   "runs": 3,
+   "detected": 1,
+   "ci95": "[1, 91]",
+   "contained": 1,
+   "median_TTD_s": 0.7,
+   "median_TTC_s": 0.7,
+   "class_correct": 0.0
+  },
+  {
+   "group": "assoc_flood/hold_full_rq",
+   "runs": 2,
+   "detected": 0,
+   "ci95": "[0, 84]",
+   "contained": 0,
+   "median_TTD_s": null,
+   "median_TTC_s": null,
+   "class_correct": null
+  },
+  {
+   "group": "exfiltration/drip (novel)",
+   "runs": 3,
+   "detected": 2,
+   "ci95": "[9, 99]",
+   "contained": 2,
+   "median_TTD_s": 16.0,
+   "median_TTC_s": 16.0,
+   "class_correct": 0.978
+  },
+  {
+   "group": "exfiltration/find_get",
+   "runs": 2,
+   "detected": 2,
+   "ci95": "[16, 100]",
+   "contained": 2,
+   "median_TTD_s": 2.3,
+   "median_TTC_s": 2.3,
+   "class_correct": 0.972
+  },
+  {
+   "group": "exfiltration/move_to_self (novel)",
+   "runs": 3,
+   "detected": 3,
+   "ci95": "[29, 100]",
+   "contained": 3,
+   "median_TTD_s": 46.1,
+   "median_TTC_s": 46.1,
+   "class_correct": 0.891
+  },
+  {
+   "group": "malformed_pdu/assoc_fuzz",
+   "runs": 3,
+   "detected": 3,
+   "ci95": "[29, 100]",
+   "contained": 3,
+   "median_TTD_s": 3.8,
+   "median_TTC_s": 3.8,
+   "class_correct": 0.072
+  },
+  {
+   "group": "malformed_pdu/pdata_fuzz (novel)",
+   "runs": 3,
+   "detected": 1,
+   "ci95": "[1, 91]",
+   "contained": 1,
+   "median_TTD_s": 93.6,
+   "median_TTC_s": 93.6,
+   "class_correct": 0.0
+  },
+  {
+   "group": "preamble_polyglot/rest_elf (novel)",
+   "runs": 2,
+   "detected": 2,
+   "ci95": "[16, 100]",
+   "contained": 2,
+   "median_TTD_s": 0.75,
+   "median_TTC_s": 0.75,
+   "class_correct": 0.746
+  },
+  {
+   "group": "preamble_polyglot/rest_mz",
+   "runs": 2,
+   "detected": 2,
+   "ci95": "[16, 100]",
+   "contained": 2,
+   "median_TTD_s": 0.65,
+   "median_TTC_s": 0.65,
+   "class_correct": 0.985
+  },
+  {
+   "group": "preamble_polyglot/stow_mz (novel)",
+   "runs": 3,
+   "detected": 3,
+   "ci95": "[29, 100]",
+   "contained": 3,
+   "median_TTD_s": 0.5,
+   "median_TTC_s": 0.5,
+   "class_correct": 0.855
+  },
+  {
+   "group": "ransomware_like/get_restore",
+   "runs": 2,
+   "detected": 2,
+   "ci95": "[16, 100]",
+   "contained": 2,
+   "median_TTD_s": 3.05,
+   "median_TTC_s": 3.05,
+   "class_correct": 0.715
+  },
+  {
+   "group": "ransomware_like/get_restore_delete (novel)",
+   "runs": 2,
+   "detected": 2,
+   "ci95": "[16, 100]",
+   "contained": 2,
+   "median_TTD_s": 5.35,
+   "median_TTC_s": 5.35,
+   "class_correct": 0.75
+  },
+  {
+   "group": "recon/dicom_ping (novel)",
+   "runs": 3,
+   "detected": 3,
+   "ci95": "[29, 100]",
+   "contained": 3,
+   "median_TTD_s": 3.6,
+   "median_TTC_s": 3.6,
+   "class_correct": 0.047
+  },
+  {
+   "group": "recon/nmap_connect",
+   "runs": 2,
+   "detected": 2,
+   "ci95": "[16, 100]",
+   "contained": 2,
+   "median_TTD_s": 3.5,
+   "median_TTC_s": 3.5,
+   "class_correct": 0.984
+  },
+  {
+   "group": "recon/nmap_syn (novel)",
+   "runs": 3,
+   "detected": 3,
+   "ci95": "[29, 100]",
+   "contained": 3,
+   "median_TTD_s": 3.1,
+   "median_TTC_s": 3.1,
+   "class_correct": 1.0
+  }
+ ],
+ "by_intensity": [
+  {
+   "group": "high",
+   "runs": 16,
+   "detected": 14,
+   "ci95": "[62, 98]",
+   "contained": 14,
+   "median_TTD_s": 2.95,
+   "median_TTC_s": 2.95,
+   "class_correct": 0.679
+  },
+  {
+   "group": "low",
+   "runs": 14,
+   "detected": 12,
+   "ci95": "[57, 98]",
+   "contained": 12,
+   "median_TTD_s": 3.8,
+   "median_TTC_s": 3.8,
+   "class_correct": 0.732
+  },
+  {
+   "group": "slow",
+   "runs": 13,
+   "detected": 10,
+   "ci95": "[46, 95]",
+   "contained": 10,
+   "median_TTD_s": 3.3,
+   "median_TTC_s": 3.3,
+   "class_correct": 0.746
+  }
+ ],
+ "by_source": [
+  {
+   "group": "modality",
+   "runs": 9,
+   "detected": 7,
+   "ci95": "[40, 97]",
+   "contained": 7,
+   "median_TTD_s": 3.8,
+   "median_TTC_s": 3.8,
+   "class_correct": 0.289
+  },
+  {
+   "group": "unknown",
+   "runs": 22,
+   "detected": 17,
+   "ci95": "[55, 92]",
+   "contained": 17,
+   "median_TTD_s": 3.3,
+   "median_TTC_s": 3.3,
+   "class_correct": 0.883
+  },
+  {
+   "group": "workstation",
+   "runs": 12,
+   "detected": 12,
+   "ci95": "[74, 100]",
+   "contained": 12,
+   "median_TTD_s": 1.9,
+   "median_TTC_s": 1.5,
+   "class_correct": 0.727
+  }
+ ],
+ "benign_hosts": {
+  "172.28.1.31": {
+   "role": "modality",
+   "windows": 297,
+   "flagged_share": 0.1178,
+   "alarm_windows": 7,
+   "max_level": 3
+  },
+  "172.28.1.32": {
+   "role": "modality",
+   "windows": 170,
+   "flagged_share": 0.0706,
+   "alarm_windows": 3,
+   "max_level": 2
+  },
+  "172.28.1.33": {
+   "role": "modality",
+   "windows": 304,
+   "flagged_share": 0.3618,
+   "alarm_windows": 28,
+   "max_level": 3
+  },
+  "172.28.1.34": {
+   "role": "modality",
+   "windows": 358,
+   "flagged_share": 0.148,
+   "alarm_windows": 17,
+   "max_level": 3
+  },
+  "172.28.1.35": {
+   "role": "modality",
+   "windows": 223,
+   "flagged_share": 0.4574,
+   "alarm_windows": 33,
+   "max_level": 3
+  },
+  "172.28.1.51": {
+   "role": "workstation",
+   "windows": 715,
+   "flagged_share": 0.5259,
+   "alarm_windows": 383,
+   "max_level": 4
+  },
+  "172.28.1.52": {
+   "role": "workstation",
+   "windows": 574,
+   "flagged_share": 0.1707,
+   "alarm_windows": 26,
+   "max_level": 4
+  },
+  "172.28.1.60": {
+   "role": "monitoring",
+   "windows": 705,
+   "flagged_share": 0.0,
+   "alarm_windows": 0,
+   "max_level": 0
+  }
+ }
+}

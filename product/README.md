@@ -35,3 +35,30 @@ PACS's Docker interface. The test bed must capture at the same kind of point, or
   (known vs novel, class, variant, intensity, source). From product/:
   `python eval/offline_eval.py --pcap-dir testbed/out/pcap --truth testbed/out/truth.csv --run-id tb_0001 --out eval/results/tb_0001`
 - `testbed/inventory.json` = device roles of the test bed (sets the criticality caps).
+
+## SOC dashboard (added 2026-11-16)
+- `vitalgate/explain/` exact TreeSHAP for the federated forest (pure Python; additivity error 4e-15) + per-alert sentence
+  and 8 feature groups as in notebook 05 (class signatures reproduce notebook 05).
+- `vitalgate/response/incidents.py` turns per-window decisions into incidents (open when a host leaves L0, close at L0),
+  with explanations, ladder actions and the PEP commands (`vitalgate/response/pep.py`).
+- `soc/replay.py` streams captured test-bed traffic through the frozen pipeline into `soc/data/incidents.json`
+  (the live detector will write the same file). `soc/server.py` serves the dashboard on http://localhost:8090 and
+  stores analyst acknowledgements/verdicts/notes in `soc/data/feedback.json` (labels for the next federated round).
+  Run (from product/), two terminals:  `python soc/server.py`   and   `python soc/replay.py --speed 30`
+  (`--instant` = process everything at once; `--onboard-until auto` = onboarding-calibrated CUSUM;
+  "evaluation mode" in the page shows the test-bed ground truth next to each incident).
+
+## Real enforcement (added 2026-11-16)
+- `testbed/pep/` = the Policy Enforcement Point: `pep-a` runs in the PACS network namespace (NET_ADMIN) and loads
+  `rules.nft` (nftables table `ip vg`): sets `watch`/`rate`/`quar`/`iso` whose elements carry a timeout, so the kernel
+  removes every action by itself unless renewed (fail-open). L2 = new DICOM connections <= 30/min; L3 = DICOM uploads
+  DNAT-ed to the quarantine store `quar-a` (172.28.1.21, Orthanc VG_QUARANTINE), all else dropped, PACS cannot open
+  connections to the device; L4 = drop both ways + conntrack flush.
+- Controller: `soc/live.py --pep-dir testbed/out/pep` (default) writes `desired.json` (level + seconds left per device,
+  analyst hold flags, AE-title map) about once a second; the agent applies changes and logs them with timestamps in
+  `applied.jsonl`; `state.json` = kernel set contents + rule counters + quarantine summary (shown on the dashboard).
+- Quarantine store: every held image is checked (executable DICOM preamble -> never released) and released to the PACS
+  once its device is below L3, unless an analyst confirmed an attack on that device (hold). Note: a C-STORE over the
+  network carries no file preamble, so for redirected scanner uploads the release decision rests on the verdict.
+- `testbed/orchestrator/enforcement_test.py` measures live: time to first action / isolation, CT uploads during
+  quarantine, REST cut, release + PACS lookup, and fail-open after killing the controller -> `testbed/out/enforcement/`.
