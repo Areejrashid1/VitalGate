@@ -42,7 +42,7 @@ PACS's Docker interface. The test bed must capture at the same kind of point, or
 - `vitalgate/response/incidents.py` turns per-window decisions into incidents (open when a host leaves L0, close at L0),
   with explanations, ladder actions and the PEP commands (`vitalgate/response/pep.py`).
 - `soc/replay.py` streams captured test-bed traffic through the frozen pipeline into `soc/data/incidents.json`
-  (the live detector will write the same file). `soc/server.py` serves the dashboard on http://localhost:8090 and
+  (the live detector will write the same file). `soc/server.py` serves the dashboard on http://localhost:8090 (sign in with a dashboard account; `--add-user NAME` creates one) and
   stores analyst acknowledgements/verdicts/notes in `soc/data/feedback.json` (labels for the next federated round).
   Run (from product/), two terminals:  `python soc/server.py`   and   `python soc/replay.py --speed 30`
   (`--instant` = process everything at once; `--onboard-until auto` = onboarding-calibrated CUSUM;

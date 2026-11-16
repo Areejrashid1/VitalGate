@@ -118,7 +118,7 @@ python orchestrator/campaign.py --rounds 1 --run-id tb_0001
 python eval/offline_eval.py --pcap-dir testbed/out/pcap --truth testbed/out/truth.csv --run-id tb_0001 --out eval/results/tb_0001
 ```
 
-**SOC dashboard** (from `product/`, then open http://localhost:8090):
+**SOC dashboard** (from `product/`, then open http://localhost:8090 and sign in; the first start asks you to create an account, and `python soc/server.py --add-user NAME` adds more):
 
 ```bash
 python soc/server.py
@@ -140,7 +140,8 @@ python orchestrator/demo.py                           # 7-minute scripted attack
 - Training captures kept 512 bytes per packet, so one feature (DICOM data-message count) depends on how the sending software writes.
 - Association floods and P-DATA fuzzing are not reliably detected yet.
 - The k-of-n gate cannot tell a hospital whose data differs from a poisoned one; adaptation to a new hospital works locally (personalised model), not through the shared model.
-- Dashboard has no login and serves on localhost only.
+- Dashboard sign-in runs over plain HTTP (no TLS) and has no roles; it serves on localhost only by default.
+- IPv4 only; IPv6 traffic is not inspected.
 
 ## Author
 

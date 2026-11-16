@@ -10,7 +10,7 @@ Logs (all times are this container's clock, the same clock the attack scripts us
   /out/pep/state.json        current set elements + rule counters + quarantine summary (dashboard)
   /out/pep/quarantine.jsonl  every image held in the quarantine store: received, checked, released or blocked
 """
-import json, os, subprocess, time, urllib.request, urllib.error
+import ipaddress, json, os, subprocess, time, urllib.request, urllib.error
 
 D = os.environ.get("PEP_DIR", "/out/pep")
 DESIRED, STATE, LOG, QLOG = (os.path.join(D, f) for f in ("desired.json", "state.json", "applied.jsonl", "quarantine.jsonl"))
@@ -18,6 +18,17 @@ QSTORE = os.environ.get("QSTORE", "http://172.28.1.21:8042")
 SETS = {1: "watch", 2: "rate", 3: "quar", 4: "iso"}
 os.makedirs(D, exist_ok=True)
 
+
+
+def valid_entry(ip, h):
+    """desired.json is the only input that becomes nft/conntrack arguments: a plain dotted IPv4 address, level 0-4."""
+    try:
+        ok_ip = isinstance(ip, str) and str(ipaddress.IPv4Address(ip)) == ip
+    except ValueError:
+        return False
+    if not (ok_ip and isinstance(h, dict)): return False
+    lv, ttl = h.get("level", 0), h.get("ttl", 60)
+    return isinstance(lv, int) and not isinstance(lv, bool) and 0 <= lv <= 4 and isinstance(ttl, (int, float)) and 0 <= ttl <= 86400
 
 def log(path, **row):
     row.setdefault("t", round(time.time(), 3))
@@ -175,7 +186,11 @@ def main():
         d = read_desired()
         if d and d.get("seq") != seen_seq:
             seen_seq = d.get("seq"); now = time.time()
-            want = {ip: h for ip, h in d.get("hosts", {}).items() if h.get("level", 0) > 0}
+            want = {}
+            for ip, h in (d.get("hosts") or {}).items():          # only well-formed entries reach an nft script
+                if not valid_entry(ip, h):
+                    log(LOG, event="rejected", ip=str(ip)[:64], reason="bad ip or level", seq=seen_seq); continue
+                if h["level"] > 0: want[ip] = h
             for ip in set(cur) | set(want):
                 old = cur.get(ip, {}).get("level", 0); new = want.get(ip, {}).get("level", 0)
                 if new == 0:

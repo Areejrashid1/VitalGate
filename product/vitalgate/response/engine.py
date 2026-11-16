@@ -49,6 +49,9 @@ class ResponseEngine:
         if det["kind"] != "cusum":
             raise ValueError("only the CUSUM detector is implemented")
         self.kref, self.h, self.gap = float(det["kref"]), float(det["h"]), float(det["gap_s"])
+        # evidence fades with a half-life instead of being wiped after gap_s of silence, so attacks paced just
+        # over the gap still add up (default half-life = gap_s; the frozen policy file is not changed)
+        self.half_life = float(det.get("half_life_s", self.gap))
         self.kref_host = {ip: float(v) for ip, v in (det.get("per_host_k") or {}).items()}
         self.sev_of = lad["severity"]; self.esc = float(lad["escalate_after_s"]); self.ttl = float(lad["ttl_s"])
         self.max_level = {k: int(v) for k, v in crit["max_level"].items()}
@@ -81,9 +84,11 @@ class ResponseEngine:
         h = self.hosts.get(ip)
         if h is None:
             h = self.hosts[ip] = _Host()
-        # detection (notebook 06 detect(): CUSUM resets after a silence > gap_s)
-        if t - h.prev_t > self.gap:
-            h.S = 0.0
+        # detection: CUSUM with exponential forgetting (notebook 06 reset S to 0 after a silence > gap_s, which
+        # let an attacker pace pulses just over gap_s and never alarm)
+        dt = t - h.prev_t
+        if dt > 0 and h.S > 0:
+            h.S *= 0.5 ** (dt / self.half_life)
         h.S = max(0.0, h.S + score - self.kref_host.get(ip, self.kref))
         alarm = bool(h.S > self.h or rule)
         h.prev_t = t

@@ -128,6 +128,8 @@ svg.chart text{fill:var(--muted);font-size:10px;font-family:var(--mono)}
   <div class="spacer"></div>
   <label class="tog" title="Show the test-bed ground truth next to incidents (evaluation only)"><input type="checkbox" id="evalmode"> evaluation mode</label>
   <span class="clock" id="clock">—</span>
+  <span class="pill" title="Signed-in analyst">👤 <span id="who">…</span></span>
+  <button class="btn" onclick="logout()" style="padding:3px 10px">Sign out</button>
 </header>
 
 <div class="view on" id="v-overview">
@@ -225,8 +227,13 @@ const fb = id => (S.feedback||{})[id] || {};
 const host = ip => (S.hosts||[]).find(h => h.ip === ip) || {ip, name: ip, role: "unknown"};
 const devcell = (name, ip) => `<div class="devname">${esc(name)}</div><div class="devip">${esc(ip)}</div>`;
 
+// signed-in session (cookie set by /login); any 401 sends the analyst back to the sign-in page
+const api = (url, opt={}) => fetch(url, {...opt, credentials: "same-origin"}).then(r => { if (r.status === 401) location.replace("/login?expired"); return r; });
+async function logout(){ await fetch("/api/logout", {method:"POST", headers:{"Content-Type":"application/json"}, body:"{}"}); location.replace("/login?out"); }
 async function poll(){
-  try { const r = await fetch("/api/state", {cache:"no-store"}); S = await r.json(); notify(); render(); }
+  try { const r = await api("/api/state", {cache:"no-store"});
+        if (r.status === 401) return;
+        S = await r.json(); if (S.user) $("#who").textContent = S.user; notify(); render(); }
   catch(e){ $("#src").className = "pill bad"; $("#src").textContent = "dashboard server offline"; }
 }
 function notify(){
@@ -479,7 +486,8 @@ function renderDetail(){
   $("#note").addEventListener("input", () => noteDirty = true);
 }
 async function send(id, body){
-  await fetch("/api/feedback/" + id, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  const r = await api("/api/feedback/" + id, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  if (r.status === 401) return;
   noteDirty = false; poll();
 }
 function saveNote(id){ send(id, {note: $("#note").value}); }
