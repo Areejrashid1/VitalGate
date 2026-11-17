@@ -118,6 +118,11 @@ python orchestrator/campaign.py --rounds 1 --run-id tb_0001
 python eval/offline_eval.py --pcap-dir testbed/out/pcap --truth testbed/out/truth.csv --run-id tb_0001 --out eval/results/tb_0001
 ```
 
+**Run the console like an application** (Windows): double-click `start.cmd` (replay mode, no Docker) or run
+`start.cmd live` (Docker test bed + live gateway), then sign in at http://localhost:8090. Double-click `stop.cmd`
+to stop everything. The same from PowerShell: `.\vitalgate.ps1 start|stop|status|logs|adduser [-Mode live]`.
+Logs go to `product/soc/data/logs/`.
+
 **SOC dashboard** (from `product/`, then open http://localhost:8090 and sign in; the first start asks you to create an account, and `python soc/server.py --add-user NAME` adds more):
 
 ```bash
