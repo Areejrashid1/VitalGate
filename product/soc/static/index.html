@@ -419,17 +419,33 @@ function renderIncidents(){
   if (!noteDirty) renderDetail();
 }
 
+/* Device charts. A device only produces a window when it talks, so raw points are bursty. Both charts put time
+   into fixed buckets (about 2 px each): no traffic in a bucket = 0, the response level carries forward (it stays in
+   force between windows), so the lines are continuous. */
+function buckets(T, t0, t1, n){
+  const B = Array.from({length: n}, () => []), span = Math.max(t1 - t0, 1);
+  T.forEach(r => { const k = Math.min(n - 1, Math.max(0, Math.floor((r[0] - t0) / span * n))); B[k].push(r); });
+  return B;
+}
 function chart(T, W=470, H=96){
   if (!T.length) return "";
-  const P = 24, t0 = T[0][0], t1 = Math.max(T[T.length-1][0], t0+2);
-  const x = t => P + (W-P-6)*(t-t0)/(t1-t0), ys = v => H-16-(H-26)*v, yl = l => H-16-(H-26)*l/4;
-  let a = "", st = "", pt = null;
-  T.forEach(r => { const X = x(r[0]).toFixed(1), n = pt === null || r[0]-pt > 60;
-    a += (n ? "M" : "L") + X + "," + ys(r[1]).toFixed(1); st += n ? `M${X},${yl(r[2]).toFixed(1)}` : `H${X}V${yl(r[2]).toFixed(1)}`; pt = r[0]; });
-  const al = T.filter(r => r[3]).map(r => `<rect x="${x(r[0])-1}" y="${H-14}" width="2" height="6" fill="var(--l4)"/>`).join("");
+  const P = 24, t0 = T[0][0], t1 = Math.max(T[T.length-1][0], t0+2), n = Math.floor((W-P-6)/2);
+  const xb = k => P + (W-P-6)*(k+.5)/n, ys = v => H-16-(H-26)*v, yl = l => H-16-(H-26)*l/4;
+  const B = buckets(T, t0, t1, n);
+  let lv = 0, sc = "", area = `M${xb(0).toFixed(1)},${ys(0)}`, st = "";
+  B.forEach((b, k) => {
+    const v = b.length ? Math.max(...b.map(r => r[1])) : 0;
+    if (b.length) lv = b[b.length-1][2];
+    const X = xb(k).toFixed(1);
+    sc += (k ? "L" : "M") + X + "," + ys(v).toFixed(1); area += "L" + X + "," + ys(v).toFixed(1);
+    st += k ? `H${X}V${yl(lv).toFixed(1)}` : `M${X},${yl(lv).toFixed(1)}`;
+  });
+  area += `L${xb(n-1).toFixed(1)},${ys(0)}Z`;
+  const al = B.map((b, k) => b.some(r => r[3]) ? `<rect x="${xb(k)-1}" y="${H-14}" width="2" height="6" fill="var(--l4)"/>` : "").join("");
   return `<svg class="chart" width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
     ${[0,1,2,3,4].map(l => `<line x1="${P}" x2="${W}" y1="${yl(l)}" y2="${yl(l)}" stroke="var(--line)"/><text x="2" y="${yl(l)+3}">L${l}</text>`).join("")}
-    <path d="${a}" fill="none" stroke="var(--accent)" stroke-width="1.4"/><path d="${st}" fill="none" stroke="var(--l3)" stroke-width="2"/>${al}
+    <path d="${area}" fill="var(--accent)" fill-opacity=".12"/>
+    <path d="${sc}" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-linejoin="round"/><path d="${st}" fill="none" stroke="var(--l3)" stroke-width="2"/>${al}
     <text x="${P}" y="${H-1}">${tm(t0)}</text><text x="${W-52}" y="${H-1}">${tm(t1)}</text></svg>
     <div class="lg"><span><i style="background:var(--accent)"></i>how attack-like the traffic looked (0–1)</span><span><i style="background:var(--l3)"></i>response level</span><span><i style="background:var(--l4);width:2px;height:7px"></i>alarm</span></div>`;
 }
@@ -523,15 +539,23 @@ function renderDevices(){
 }
 function traffic(s, W=400, H=110){
   if (!s.length) return '<div class="muted">no traffic yet</div>';
-  const P = 34, t0 = s[0][0], t1 = Math.max(s[s.length-1][0], t0+2), mx = Math.max(1, ...s.map(r => Math.max(r[1], r[2])));
-  const x = t => P + (W-P-4)*(t-t0)/(t1-t0), y = v => H-14-(H-22)*Math.log10(1+v)/Math.log10(1+mx);
-  const line = k => { let d = "", pt = null; s.forEach(r => { d += (pt === null || r[0]-pt > 60 ? "M" : "L") + x(r[0]).toFixed(1) + "," + y(r[k]).toFixed(1); pt = r[0]; }); return d; };
-  const errs = s.filter(r => r[6]).map(r => `<rect x="${x(r[0])-1}" y="${H-12}" width="2" height="6" fill="var(--warn)"/>`).join("");
+  const P = 34, t0 = s[0][0], t1 = Math.max(s[s.length-1][0], t0+2), n = Math.floor((W-P-4)/2);
+  const B = buckets(s, t0, t1, n), slot = (t1 - t0) / n;
+  const sent = B.map(b => b.reduce((a, r) => a + r[1], 0)), recv = B.map(b => b.reduce((a, r) => a + r[2], 0));
+  const mx = Math.max(1, ...sent, ...recv);
+  const xe = k => P + (W-P-4)*k/n, xb = k => xe(k+.5), y = v => H-14-(H-22)*Math.log10(1+v)/Math.log10(1+mx);
+  // step outline: flat across each slot, so idle slots sit on the baseline and bursts read as bars
+  const line = V => V.map((v, k) => (k ? "H" + xe(k).toFixed(1) + "V" : "M" + xe(0).toFixed(1) + ",") + y(v).toFixed(1)).join("") + "H" + xe(n).toFixed(1);
+  const area = V => line(V) + `V${y(0)}H${xe(0).toFixed(1)}Z`;
+  const errs = B.map((b, k) => b.some(r => r[6]) ? `<rect x="${xb(k)-1}" y="${H-12}" width="2" height="6" fill="var(--warn)"/>` : "").join("");
+  const per = slot < 90 ? Math.round(slot) + " s" : (slot/60).toFixed(1) + " min";
   return `<svg class="chart" width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
     <text x="0" y="12">${bytes(mx)}</text><text x="0" y="${H-14}">0</text>
-    <path d="${line(1)}" fill="none" stroke="var(--accent)" stroke-width="1.4"/><path d="${line(2)}" fill="none" stroke="#c6a5f5" stroke-width="1.4"/>${errs}
+    <path d="${area(sent)}" fill="var(--accent)" fill-opacity=".22"/><path d="${area(recv)}" fill="#c6a5f5" fill-opacity=".16"/>
+    <path d="${line(sent)}" fill="none" stroke="var(--accent)" stroke-width="1"/>
+    <path d="${line(recv)}" fill="none" stroke="#c6a5f5" stroke-width="1"/>${errs}
     <text x="${P}" y="${H-1}">${tm(t0)}</text><text x="${W-52}" y="${H-1}">${tm(t1)}</text></svg>
-    <div class="lg"><span><i style="background:var(--accent)"></i>sent to PACS (per 2 s, log scale)</span><span><i style="background:#c6a5f5"></i>received</span><span><i style="background:var(--warn);width:2px;height:7px"></i>protocol errors</span></div>`;
+    <div class="lg"><span><i style="background:var(--accent)"></i>sent to PACS (per ${per}, log scale)</span><span><i style="background:#c6a5f5"></i>received</span><span><i style="background:var(--warn);width:2px;height:7px"></i>protocol errors</span></div>`;
 }
 
 /* ---------------- system ---------------- */

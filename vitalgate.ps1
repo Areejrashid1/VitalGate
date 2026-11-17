@@ -33,6 +33,13 @@ function Python {
   foreach ($c in "python", "py") { if (Get-Command $c -ErrorAction SilentlyContinue) { return $c } }
   throw "Python was not found. Install Python 3 and tick 'Add python.exe to PATH'."
 }
+function Run-Native([string]$cmd, [string]$log = $null) {
+  # Docker prints progress on stderr; Windows PowerShell 5.1 turns that into an error under "Stop".
+  # Run it through cmd so only the exit code decides success.
+  $dest = if ($log) { "`"$log`"" } else { "nul" }
+  cmd /c "$cmd > $dest 2>&1"
+  return $LASTEXITCODE
+}
 function Ours {   # python processes running our scripts, even ones started by hand
   Get-CimInstance Win32_Process -Filter "Name='python.exe' OR Name='py.exe'" |
     Where-Object { $_.CommandLine -match 'soc[\\/](server|replay|live)\.py' }
@@ -45,6 +52,23 @@ function Launch($name, [string[]]$scriptArgs) {
   return $p.Id
 }
 
+function Stop-VitalGate {
+  $run = if (Test-Path $State) { Get-Content $State -Raw | ConvertFrom-Json } else { $null }
+  $procs = @(Ours)
+  if ($procs.Count) {
+    $procs | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+                              Say ("  stopped {0} (pid {1})" -f ($_.CommandLine -replace '.*soc[\\/](\w+)\.py.*', '$1'), $_.ProcessId) "DarkGray" }
+  } else { Say "No VitalGate processes were running." }
+  if ($run -and $run.docker) {
+    Say "Stopping the test bed..."
+    Push-Location $Testbed; try { Run-Native "docker compose down" | Out-Null } finally { Pop-Location }
+  }
+  Remove-Item $State -ErrorAction SilentlyContinue
+  Remove-Item (Join-Path $Data "live.lock") -ErrorAction SilentlyContinue
+  $t = 0; while ((Listening) -and $t -lt 20) { Start-Sleep -Milliseconds 250; $t++ }
+  Say "VitalGate stopped." "Green"
+}
+
 switch ($Action) {
 
   "adduser" {
@@ -55,9 +79,16 @@ switch ($Action) {
   "start" {
     Say "`nVitalGate SOC  ($Mode mode)" "Cyan"
     if (Listening) {
-      Say "Already running on $Url" "Yellow"
-      if (-not $NoBrowser) { Start-Process $Url }
-      return
+      $cur = if (Test-Path $State) { (Get-Content $State -Raw | ConvertFrom-Json).mode } else { $null }
+      $feed = if ($Mode -eq "live") { "live" } else { "replay" }
+      $feedUp = [bool](@(Ours) | Where-Object { $_.CommandLine -match "soc[\\/]$feed\.py" })
+      if ($cur -eq $Mode -and $feedUp) {
+        Say "Already running in $Mode mode on $Url" "Yellow"
+        if (-not $NoBrowser) { Start-Process $Url }
+        return
+      }
+      Say "Something else is running (mode: $(if ($cur) { $cur } else { 'unknown / started by hand' })). Switching to $Mode mode..." "Yellow"
+      Stop-VitalGate
     }
     $py = Python
     # 1. first analyst account (asked here, because the server runs hidden)
@@ -72,11 +103,10 @@ switch ($Action) {
     # 2. live mode needs the Docker test bed
     if ($Mode -eq "live") {
       if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { throw "Docker is not installed or not on PATH." }
-      docker info *> $null
-      if ($LASTEXITCODE) { throw "Docker Desktop is not running. Start it and try again." }
+      if (Run-Native "docker info") { throw "Docker Desktop is not running. Start it and try again." }
       Say "Starting the test bed (first time can take a few minutes)..."
       Push-Location $Testbed
-      try { docker compose up -d --build *> (Join-Path $Logs "docker.log"); if ($LASTEXITCODE) { throw "docker compose failed - see $Logs\docker.log" } }
+      try { if (Run-Native "docker compose up -d --build" (Join-Path $Logs "docker.log")) { Get-Content (Join-Path $Logs "docker.log") -Tail 15; throw "docker compose failed - see $Logs\docker.log" } }
       finally { Pop-Location }
       $run.docker = $true
     }
@@ -101,21 +131,7 @@ switch ($Action) {
     if (-not $NoBrowser) { Start-Process $Url }
   }
 
-  "stop" {
-    $run = if (Test-Path $State) { Get-Content $State -Raw | ConvertFrom-Json } else { $null }
-    $procs = @(Ours)
-    if ($procs.Count) {
-      $procs | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
-                                Say ("  stopped {0} (pid {1})" -f ($_.CommandLine -replace '.*soc[\\/](\w+)\.py.*', '$1'), $_.ProcessId) "DarkGray" }
-    } else { Say "No VitalGate processes were running." }
-    if ($run -and $run.docker) {
-      Say "Stopping the test bed..."
-      Push-Location $Testbed; try { docker compose down *> $null } finally { Pop-Location }
-    }
-    Remove-Item $State -ErrorAction SilentlyContinue
-    Remove-Item (Join-Path $Data "live.lock") -ErrorAction SilentlyContinue
-    Say "VitalGate stopped." "Green"
-  }
+  "stop" { Stop-VitalGate }
 
   "status" {
     $run = if (Test-Path $State) { Get-Content $State -Raw | ConvertFrom-Json } else { $null }
@@ -123,7 +139,7 @@ switch ($Action) {
     $procs = @(Ours)
     foreach ($p in $procs) { Say ("  {0,-7} pid {1}" -f ($p.CommandLine -replace '.*soc[\\/](\w+)\.py.*', '$1'), $p.ProcessId) }
     if ($run) { Say "Mode: $($run.mode), started $($run.started)" "DarkGray" }
-    if ($run -and $run.docker) { Push-Location $Testbed; try { docker compose ps } finally { Pop-Location } }
+    if ($run -and $run.docker) { Push-Location $Testbed; try { cmd /c "docker compose ps 2>&1" } finally { Pop-Location } }
   }
 
   "logs" {
