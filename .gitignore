@@ -22,3 +22,6 @@ models_v*/
 reports_v*/
 *.tmp
 *.lock
+
+# SOC console: accounts, sessions, launcher logs (never commit)
+console/data/

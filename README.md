@@ -65,6 +65,8 @@ src/                  feature builder (features.py) and MLflow tracking helper
 scripts/              DICOM command extraction, MLflow backfill, notebook upgrades
 data/processed/       window table + feature schema + host roles (not in git)
 models/, reports/     trained models and notebook reports (models not in git)
+console/              SOC console: multi-page web app (server.py + web/) on top of product/; see console/README.md
+start.cmd, start-live.cmd, stop.cmd, vitalgate.ps1   one-click launchers for the console + pipeline
 product/
   vitalgate/          the product: sensor/, model/, explain/, response/, pipeline.py, evaluation.py
   bundle/             frozen deployed model (48 federated updates, SHA-256 checked); bundle_* = adapted variants
@@ -72,7 +74,7 @@ product/
   tests/              parity tests: sensor vs training extractor, product vs notebooks 05/06
   eval/               offline_eval.py (score a campaign) and results/
   adapt/              fed_adapt.py (federated and personalised adaptation of a new hospital)
-  soc/                SOC dashboard: server.py, live.py (live pipeline + controller), replay.py, static/
+  soc/                live.py (live pipeline + controller), replay.py; server.py + static/ = original minimal dashboard
   testbed/            Docker test bed: PACS, quarantine store, 5 modalities, 2 workstations, monitor,
                       attacker, capture, PEP agent (pep/), orchestrator/ (campaign, demo, enforcement_test)
 ```
@@ -118,17 +120,26 @@ python orchestrator/campaign.py --rounds 1 --run-id tb_0001
 python eval/offline_eval.py --pcap-dir testbed/out/pcap --truth testbed/out/truth.csv --run-id tb_0001 --out eval/results/tb_0001
 ```
 
-**Run the console like an application** (Windows): double-click `start.cmd` (replay mode, no Docker) or run
-`start.cmd live` (Docker test bed + live gateway), then sign in at http://localhost:8090. Double-click `stop.cmd`
-to stop everything. The same from PowerShell: `.\vitalgate.ps1 start|stop|status|logs|adduser [-Mode live]`.
-Logs go to `product/soc/data/logs/`.
+**Run the SOC console** (Windows). The console in `console/` shows everything the pipeline produces: dashboard,
+medical devices, network monitoring, threat detection, SHAP explanations, zero-trust response, quarantine,
+federated learning, incidents with analyst triage, analytics, logs and settings, in light and dark themes.
 
-**SOC dashboard** (from `product/`, then open http://localhost:8090 and sign in; the first start asks you to create an account, and `python soc/server.py --add-user NAME` adds more):
+| What | How (from the repo root) |
+| --- | --- |
+| Replay (recorded traffic, no Docker) | double-click `start.cmd` |
+| Live (Docker test bed + real gateway) | open Docker Desktop, then double-click `start-live.cmd` |
+| Stop everything | double-click `stop.cmd` |
+| Status / logs | `.\vitalgate.ps1 status` · `.\vitalgate.ps1 logs` |
+| Accounts | `.\vitalgate.ps1 adduser` · `.\vitalgate.ps1 requests` · `.\vitalgate.ps1 approve` |
+
+Then open http://localhost:8090 and sign in. Details in [console/README.md](console/README.md).
+
+**Manual start** (three terminals, from the repo root):
 
 ```bash
-python soc/server.py
-python soc/live.py                                    # live: follows the capture and drives the gateway
-python soc/replay.py --speed 30                       # or: replay recorded traffic without Docker
+cd product/testbed && docker compose up -d --build    # live mode only
+cd product && python soc/live.py                      # live   (or: python soc/replay.py --speed 30)
+cd console && python server.py                        # console on http://localhost:8090
 ```
 
 **Live enforcement test and demo** (from `product/testbed/`, test bed running, no other `live.py`):
